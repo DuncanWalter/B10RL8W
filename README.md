@@ -51,6 +51,8 @@ Parcel is PO\* so if you're on Linux, run the following command to allow parcel 
 echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 ```
 
+For reference, the default number of user watches on Ubuntu 18.04 is 8192.
+
 # Mac
 
 Should just work out of the box?
