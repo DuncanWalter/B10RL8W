@@ -4,12 +4,11 @@
   "description": "Central impl repository for our RL project",
   "main": "index.js",
   "scripts": {
-    "precommit": "npm run test && npm run prettier",
+    "precommit": "npm run test && pretty-quick",
     "dev": "parcel ./src/index.html -d build/",
-    "start-dev": "ELECTRON_START_URL=http://localhost:1234 electron ./src",
-    "start": "electron .",
-    "test": "jest",
-    "prettier": "pretty-quick"
+    "build-logger": "tsc --outDir ./build -p ./tsconfig.server.json",
+    "run-logger": "node ./build/main.js",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -40,6 +39,8 @@
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",
+    "@types/koa": "^2.0.46",
+    "@types/koa-route": "^3.2.4",
     "@types/mathjs": "^4.4.1",
     "@types/react": "^16.4.13",
     "@types/react-dom": "^16.0.7",
@@ -52,9 +53,9 @@
     "typescript": "3.0.3"
   },
   "dependencies": {
-    "electron": "2.0.8",
-    "electron-reload": "^1.2.5",
     "gpu.js": "1.7.0",
+    "koa": "^2.5.2",
+    "koa-route": "^3.2.0",
     "mathjs": "^5.1.1",
     "react": "^16.4.2",
     "react-dom": "^16.4.2"
