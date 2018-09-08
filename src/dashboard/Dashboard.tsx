@@ -6,12 +6,13 @@ import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
 import FormLabel from '@material-ui/core/FormLabel'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
-import TextField from '@material-ui/core/TextField'
 import InputLabel from '@material-ui/core/InputLabel'
+import Radio from '@material-ui/core/Radio'
+import RadioGroup from '@material-ui/core/RadioGroup'
+import Switch from '@material-ui/core/Switch'
+import TextField from '@material-ui/core/TextField'
 
 import { withStyles } from '@material-ui/core/styles'
-import { RadioGroup } from '@material-ui/core'
-import { Radio } from '@material-ui/core'
 
 type DashboardProps = {
   classes: { [K in keyof typeof styles]: string }
@@ -31,7 +32,7 @@ type DashboardState = {
       | 'suit-counting'
       | 'card-counting'
       | 'context-learning'
-    scenario: 'simplified' | 'complete'
+    simplified: boolean
   }
 }
 
@@ -63,7 +64,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
         suitCount: 4,
         gameCount: 200,
         agentType: 'contextless',
-        scenario: 'simplified',
+        simplified: true,
       },
     }
   }
@@ -162,7 +163,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
         <FormControl>
           <TextField
             onChange={onChange('colorCount')}
-            label="suits"
+            label="Suits"
             value={suitCount}
             type="number"
           />
@@ -213,34 +214,29 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
     )
   }
 
-  renderScenarioOptions() {
+  renderRulesOptions() {
     const { classes } = this.props
     return (
       <FormControl className={classes.padded}>
-        <FormLabel>Game Scenario</FormLabel>
-        <RadioGroup
-          value={this.state.config.scenario}
-          onChange={(event: any) => {
-            const scenario = event.target.value
-            this.setState(state => ({
-              config: {
-                ...state.config,
-                scenario: scenario,
-              },
-            }))
-          }}
-        >
-          <FormControlLabel
-            value="simplified"
-            control={<Radio />}
-            label="Simplified"
-          />
-          <FormControlLabel
-            value="complete"
-            control={<Radio />}
-            label="Complete"
-          />
-        </RadioGroup>
+        <FormLabel>Game Rules</FormLabel>
+        <FormControlLabel
+          control={
+            <Switch
+              value="simplified"
+              checked={this.state.config.simplified}
+              onChange={(event: any) => {
+                const simplified = event.target.checked
+                this.setState(state => ({
+                  config: {
+                    ...state.config,
+                    simplified: simplified,
+                  },
+                }))
+              }}
+            />
+          }
+          label="Simplified"
+        />
       </FormControl>
     )
   }
@@ -251,7 +247,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
       <Card className={classes.card}>
         {this.renderLearningOptions()}
         {this.renderBehaviorOptions()}
-        {this.renderScenarioOptions()}
+        {this.renderRulesOptions()}
         {this.renderScaleOptions()}
       </Card>
     )
