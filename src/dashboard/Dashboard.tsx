@@ -10,8 +10,8 @@ import TextField from '@material-ui/core/TextField'
 import InputLabel from '@material-ui/core/InputLabel'
 
 import { withStyles } from '@material-ui/core/styles'
-// TODO: WHY!?!?!?!?!
-import { FormGroup, RadioGroup, Radio } from '@material-ui/core'
+import { RadioGroup } from '@material-ui/core'
+import { Radio } from '@material-ui/core'
 
 type DashboardProps = {
   classes: { [K in keyof typeof styles]: string }
@@ -24,11 +24,10 @@ type DashboardState = {
     transferLearning: boolean
     selectedLog: string | null
     online: boolean
-    agentCount: number
-    colorCount: number
+    suitCount: number
     gameCount: number
-    agentType: 'hyper-focussed' | 'selfish' | 'generous'
-    scenario: 'balanced' | 'scarcity' | 'poverty'
+    agentType: 'contextless' | 'suit-counting' | 'card-counting' | 'context-learning'
+    scenario: 'simplified' | 'complete'
   }
 }
 
@@ -57,11 +56,10 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
         transferLearning: false,
         selectedLog: null,
         online: true,
-        agentCount: 5,
-        colorCount: 2,
+        suitCount: 4,
         gameCount: 200,
-        agentType: 'selfish',
-        scenario: 'balanced',
+        agentType: 'contextless',
+        scenario: 'simplified',
       },
     }
   }
@@ -135,7 +133,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
   renderScaleOptions() {
     const { classes } = this.props
     const {
-      config: { gameCount, agentCount, colorCount },
+      config: { gameCount, suitCount },
     } = this.state
     const onChange = (key: any) => (event: any) => {
       const value = event.target.value
@@ -159,17 +157,9 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
         </FormControl>
         <FormControl>
           <TextField
-            onChange={onChange('agentCount')}
-            label="Agents"
-            value={agentCount}
-            type="number"
-          />
-        </FormControl>
-        <FormControl>
-          <TextField
             onChange={onChange('colorCount')}
-            label="Colors"
-            value={colorCount}
+            label="suits"
+            value={suitCount}
             type="number"
           />
         </FormControl>
@@ -195,19 +185,24 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
           }}
         >
           <FormControlLabel
-            value="selfish"
+            value="contextless"
             control={<Radio />}
-            label="Selfish"
+            label="Contextless"
           />
           <FormControlLabel
-            value="generous"
+            value="suit-counting"
             control={<Radio />}
-            label="Generous"
+            label="Suit Counting"
           />
           <FormControlLabel
-            value="hyper-focussed"
+            value="card-counting"
             control={<Radio />}
-            label="Hyper Focussed"
+            label="Card Counting"
+          />
+          <FormControlLabel
+            value="context-learning"
+            control={<Radio />}
+            label="Context Learning"
           />
         </RadioGroup>
       </FormControl>
@@ -232,19 +227,14 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
           }}
         >
           <FormControlLabel
-            value="balanced"
+            value="simplified"
             control={<Radio />}
-            label="Balanced"
+            label="Simplified"
           />
           <FormControlLabel
-            value="scarcity"
+            value="complete"
             control={<Radio />}
-            label="Scarcity"
-          />
-          <FormControlLabel
-            value="poverty"
-            control={<Radio />}
-            label="Poverty"
+            label="Complete"
           />
         </RadioGroup>
       </FormControl>
