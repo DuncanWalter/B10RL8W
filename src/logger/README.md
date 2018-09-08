@@ -12,10 +12,11 @@ The data of a log will be
 
 ```javascript
 {
-  agentType: 'hyper-focussed' | 'selfish' | 'generous',
+  agentType: 'contextless' | 'suit-counting' | 'card-counting' | 'context-learning',
+  simplified: boolean,
   gamesPlayed: number,
-  // The number of colors in use
-  currencyCount: number,
+  // The number of suits in use
+  suitCount: number,
   // Used to identify a log
   sessionName: string,
   creationTime: number,
