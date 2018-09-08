@@ -53,6 +53,7 @@
     "typescript": "3.0.3"
   },
   "dependencies": {
+    "@material-ui/core": "^3.0.2",
     "gpu.js": "1.7.0",
     "koa": "^2.5.2",
     "koa-route": "^3.2.0",
