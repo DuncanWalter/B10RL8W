@@ -26,7 +26,11 @@ type DashboardState = {
     online: boolean
     suitCount: number
     gameCount: number
-    agentType: 'contextless' | 'suit-counting' | 'card-counting' | 'context-learning'
+    agentType:
+      | 'contextless'
+      | 'suit-counting'
+      | 'card-counting'
+      | 'context-learning'
     scenario: 'simplified' | 'complete'
   }
 }
