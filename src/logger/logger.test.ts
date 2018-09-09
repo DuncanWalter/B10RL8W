@@ -16,11 +16,10 @@ test('A Get request to "logs" will return a list of log files', async () => {
   req.end()
   const resPromise = new Promise(resolve => {
     req.once('response', res => {
-      console.log(res)
       resolve(unwrapStream(res))
     })
   })
   console.log(resPromise)
   console.log(await resPromise)
-  expect(await resPromise).toBe('There are NOT FUA(OSDFNA) no files to read')
+  expect(typeof (await resPromise)).toBe('string')
 })
