@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import * as Koa from 'koa'
 import * as route from 'koa-route'
 import { unwrapStream } from './utils'
-import { Session } from 'inspector'
 
 export const app = new Koa()
 
