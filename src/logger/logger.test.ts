@@ -19,7 +19,5 @@ test('A Get request to "logs" will return a list of log files', async () => {
       resolve(unwrapStream(res))
     })
   })
-  console.log(resPromise)
-  console.log(await resPromise)
-  expect(typeof (await resPromise)).toBe('string')
+  expect(await resPromise).toHaveProperty('logs')
 })
