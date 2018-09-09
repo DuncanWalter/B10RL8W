@@ -1,30 +1,10 @@
 import * as fs from 'fs'
 import * as Koa from 'koa'
 import * as route from 'koa-route'
-import * as stream from 'stream'
+import { unwrapStream } from './utils'
+import { Session } from 'inspector'
 
 export const app = new Koa()
-
-export function unwrapStream(stream: stream) {
-  return new Promise<any>(resolve => {
-    const data: string[] = []
-    stream.on('data', chunk => {
-      if (chunk instanceof Buffer) {
-        data.push(chunk.toString('utf8'))
-      } else {
-        data.push(chunk)
-      }
-    })
-    stream.on('end', () => {
-      const allData = data.join()
-      if (allData === '') {
-        resolve(undefined)
-      } else {
-        resolve(JSON.parse(allData))
-      }
-    })
-  })
-}
 
 type LogBase = {
   agentType:
@@ -56,13 +36,12 @@ type LogRequest = {
   sessionName: string
 }
 
-let deleteLog = (request: LogRequest) =>
+const deleteLog = (request: LogRequest) =>
   new Promise<string>((resolve, reject) => {
     let fileName = sanitizeSessionName(request.sessionName)
-    fs.unlink('.logs/' + fileName, err => {
+    fs.unlink(`.logs/${fileName}.json`, err => {
       if (err) {
-        console.error(`Error deleting ${fileName}`)
-        console.error(err)
+        console.error(`Error deleting ${fileName}.json`, err)
         reject(err)
       } else {
         resolve(
@@ -74,29 +53,41 @@ let deleteLog = (request: LogRequest) =>
     })
   })
 
-let listLogs = () =>
+const grabLog = (request: LogRequest) =>
+  new Promise<string>((resolve, reject) => {
+    let fileName = sanitizeSessionName(request.sessionName)
+    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
+      if (err) {
+        console.error(`Error loading ${fileName}.json`, err)
+        reject(err)
+      } else {
+        resolve(data.toString('utf-8'))
+      }
+    })
+  })
+
+const listLogs = () =>
   new Promise<string>((resolve, reject) => {
     fs.readdir('.logs/', (err, files) => {
       if (err || files === []) {
         reject('There are no files to read')
       } else {
         // message += files
-        let expandSimplified = (simplified: boolean) =>
+        const expandSimplified = (simplified: boolean) =>
           simplified ? 'simplified' : 'complete'
 
-        let filePromises = files.map(
+        let filePromises = files.filter(file => file.slice(-5) === '.json').map(
           file =>
             new Promise<string>(resolve => {
               fs.readFile('.logs/' + file, (err, data) => {
                 if (err) {
-                  console.error(`Error loading ${file}`)
-                  console.error(err)
+                  console.error(`Error loading ${file}`, err)
                 } else {
                   const log = JSON.parse(data.toString('utf-8')) as LogData
                   resolve(
-                    `${file}\t${log.sessionName}\t(${
-                      log.agentType
-                    }, ${expandSimplified(log.simplified)})\t${log.lastUpdate}`,
+                    `${log.sessionName}\t(${log.agentType}, ${expandSimplified(
+                      log.simplified,
+                    )}, ${log.suitCount} suits)\t${log.lastUpdate}`,
                   )
                 }
               })
@@ -109,30 +100,16 @@ let listLogs = () =>
     })
   })
 
-let grabLog = (request: LogRequest) =>
-  new Promise<string>((resolve, reject) => {
-    let fileName = sanitizeSessionName(request.sessionName)
-    fs.readFile('.logs/' + fileName, (err, data) => {
-      if (err) {
-        console.error(`Error loading ${fileName}`)
-        console.error(err)
-        reject(err)
-      } else {
-        resolve(data.toString('utf-8'))
-      }
-    })
-  })
-
-let sanitizeSessionName = (sessionName: string) =>
+const sanitizeSessionName = (sessionName: string) =>
   sessionName
     .split('')
-    .filter(ch => ch.match(/[a-zA-Z0-9\_]/))
+    .filter(ch => ch.match(validFileNameChars))
     .join()
 
 let updateLog = (update: LogUpdate) =>
   new Promise<string>((resolve, reject) => {
     let fileName = sanitizeSessionName(update.sessionName)
-    fs.readFile('.logs/' + fileName, (err, data) => {
+    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
       if (err) {
         console.error(`Error loading ${fileName}`)
         console.error(err)
@@ -147,8 +124,7 @@ let updateLog = (update: LogUpdate) =>
             qualityWeights: update.newQualityWeights,
           }
         } catch {
-          console.error(`Log file ${fileName} is malformed`)
-          console.error(err)
+          console.error(`Log file ${fileName}.json is malformed`, err)
           reject(err)
           return
         }
@@ -158,30 +134,34 @@ let updateLog = (update: LogUpdate) =>
           newLog.suitCount !== update.suitCount ||
           newLog.sessionName !== update.sessionName
         ) {
-          console.error(
-            `Update request on ${fileName} does not match original log`,
-          )
-          console.error('Log file', newLog)
-          console.error('Update', update)
-          reject(`Update request on ${fileName} does not match original log`)
+          const error =
+            `Update request on ${fileName}.json does not match ` +
+            `original log:\nLog file: ${newLog}\nUpdate: ${update}`
+          console.error(error)
+          reject(error)
         } else {
-          fs.writeFile('.logs/' + fileName, JSON.stringify(newLog), err => {
-            if (err) {
-              console.error(`Error writing to ${fileName}`)
-              console.error(err)
-              reject(err)
-            } else {
-              resolve(
-                JSON.stringify({
-                  message: `Successfully updated file ${update.sessionName}`,
-                }),
-              )
-            }
-          })
+          fs.writeFile(
+            `.logs/${fileName}.json`,
+            JSON.stringify(newLog),
+            err => {
+              if (err) {
+                console.error(`Error writing to ${fileName}.json`, err)
+                reject(err)
+              } else {
+                resolve(
+                  JSON.stringify({
+                    message: `Successfully updated file ${update.sessionName}`,
+                  }),
+                )
+              }
+            },
+          )
         }
       }
     })
   })
+
+const validFileNameChars = /[a-zA-Z0-9\_]/
 
 app.use(
   route.get('/logs', async (ctx, next) => {
@@ -285,5 +265,8 @@ app.use(
 )
 
 app.use(async ctx => {
-  ctx.body = 'Goodnight World!'
+  ctx.status = 404
+  ctx.body = JSON.stringify({
+    error: 'This is not the request you meant to make',
+  })
 })
