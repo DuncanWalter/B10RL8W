@@ -1,72 +1,50 @@
 import * as fs from 'fs'
 import * as Koa from 'koa'
 import * as route from 'koa-route'
+import { DELETELogResponse } from './utils'
+import { ErrorResponse } from './utils'
+import { GETLogResponse } from './utils'
+import { GETLogsResponse } from './utils'
+import { POSTLogResponse } from './utils'
+import { LogData } from './utils'
+import { LogHeader } from './utils'
+import { LogRequest } from './utils'
+import { LogUpdate } from './utils'
 import { unwrapStream } from './utils'
 
 export const app = new Koa()
 
-type LogBase = {
-  agentType:
-    | 'contextless'
-    | 'suit-counting'
-    | 'card-counting'
-    | 'context-learning'
-  simplified: boolean
-  gamesPlayed: number
-  suitCount: number
-  sessionName: string
+type RejectionResponse = {
+  status: number
+  body: ErrorResponse
 }
 
-type LogDataAttributes = {
-  creationTime: number
-  lastUpdate: number
-  qualityWeights: number[][][]
-}
+const retrieveHeader = (log: LogHeader) =>
+  ({
+    sessionName: log.sessionName,
+    agentType: log.agentType,
+    simplified: log.simplified,
+    suitCount: log.suitCount,
+    gamesPlayed: log.gamesPlayed,
+    lastUpdate: log.lastUpdate,
+  } as LogHeader)
 
-type LogUpdateAttributes = {
-  additionalGamesPlayed: number
-  newQualityWeights: number[][][]
-}
+const sanitizeSessionName = (sessionName: string) =>
+  sessionName
+    .split('')
+    .filter(ch => ch.match(validFileNameChars))
+    .join()
 
-type LogData = LogBase & LogDataAttributes
-type LogUpdate = LogBase & LogUpdateAttributes
+const updateVerified = (newLog: LogData, update: LogUpdate) =>
+  newLog.agentType == update.agentType &&
+  newLog.simplified == update.simplified &&
+  newLog.suitCount == update.suitCount &&
+  newLog.sessionName == update.sessionName
 
-type LogRequest = {
-  sessionName: string
-}
-
-const deleteLog = (request: LogRequest) =>
-  new Promise<string>((resolve, reject) => {
-    let fileName = sanitizeSessionName(request.sessionName)
-    fs.unlink(`.logs/${fileName}.json`, err => {
-      if (err) {
-        console.error(`Error deleting ${fileName}.json`, err)
-        reject(err)
-      } else {
-        resolve(
-          JSON.stringify({
-            message: `Successfully deleted file ${request.sessionName}`,
-          }),
-        )
-      }
-    })
-  })
-
-const grabLog = (request: LogRequest) =>
-  new Promise<string>((resolve, reject) => {
-    let fileName = sanitizeSessionName(request.sessionName)
-    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
-      if (err) {
-        console.error(`Error loading ${fileName}.json`, err)
-        reject(err)
-      } else {
-        resolve(data.toString('utf-8'))
-      }
-    })
-  })
+const validFileNameChars = /[a-zA-Z0-9\_]/
 
 const listLogs = () =>
-  new Promise<string>((resolve, reject) => {
+  new Promise<GETLogsResponse>((resolve, reject) => {
     fs.readdir('.logs/', (err, files) => {
       if (err || files === []) {
         reject('There are no files to read')
@@ -77,36 +55,40 @@ const listLogs = () =>
 
         let filePromises = files.filter(file => file.slice(-5) === '.json').map(
           file =>
-            new Promise<string>(resolve => {
+            new Promise<LogHeader>(resolve => {
               fs.readFile('.logs/' + file, (err, data) => {
                 if (err) {
                   console.error(`Error loading ${file}`, err)
                 } else {
                   const log = JSON.parse(data.toString('utf-8')) as LogData
-                  resolve(
-                    `${log.sessionName}\t(${log.agentType}, ${expandSimplified(
-                      log.simplified,
-                    )}, ${log.suitCount} suits)\t${log.lastUpdate}`,
-                  )
+                  resolve(retrieveHeader(log))
                 }
               })
             }),
         )
         Promise.all(filePromises).then(results =>
-          resolve(JSON.stringify({ logs: results })),
+          resolve({ logs: results } as GETLogsResponse),
         )
       }
     })
   })
 
-const sanitizeSessionName = (sessionName: string) =>
-  sessionName
-    .split('')
-    .filter(ch => ch.match(validFileNameChars))
-    .join()
+const grabLog = (request: LogRequest) =>
+  new Promise<GETLogResponse>((resolve, reject) => {
+    let fileName = sanitizeSessionName(request.sessionName)
+    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
+      if (err) {
+        console.error(`Error loading ${fileName}.json`, err)
+        reject(err)
+      } else {
+        const log = JSON.parse(data.toString('utf-8')) as LogData
+        resolve({ log: log } as GETLogResponse)
+      }
+    })
+  })
 
-let updateLog = (update: LogUpdate) =>
-  new Promise<string>((resolve, reject) => {
+const updateLog = (update: LogUpdate) =>
+  new Promise<POSTLogResponse>((resolve, reject) => {
     let fileName = sanitizeSessionName(update.sessionName)
     fs.readFile(`.logs/${fileName}.json`, (err, data) => {
       if (err) {
@@ -127,12 +109,7 @@ let updateLog = (update: LogUpdate) =>
           reject(err)
           return
         }
-        if (
-          newLog.agentType !== update.agentType ||
-          newLog.simplified !== update.simplified ||
-          newLog.suitCount !== update.suitCount ||
-          newLog.sessionName !== update.sessionName
-        ) {
+        if (!updateVerified) {
           const error =
             `Update request on ${fileName}.json does not match ` +
             `original log:\nLog file: ${newLog}\nUpdate: ${update}`
@@ -147,11 +124,9 @@ let updateLog = (update: LogUpdate) =>
                 console.error(`Error writing to ${fileName}.json`, err)
                 reject(err)
               } else {
-                resolve(
-                  JSON.stringify({
-                    message: `Successfully updated file ${update.sessionName}`,
-                  }),
-                )
+                resolve({
+                  message: `Successfully updated file ${update.sessionName}`,
+                } as POSTLogResponse)
               }
             },
           )
@@ -160,110 +135,109 @@ let updateLog = (update: LogUpdate) =>
     })
   })
 
-const validFileNameChars = /[a-zA-Z0-9\_]/
+const deleteLog = (request: LogRequest) =>
+  new Promise<DELETELogResponse>((resolve, reject) => {
+    let fileName = sanitizeSessionName(request.sessionName)
+    fs.unlink(`.logs/${fileName}.json`, err => {
+      if (err) {
+        console.error(`Error deleting ${fileName}.json`, err)
+        reject(err)
+      } else {
+        resolve({
+          message: `Successfully deleted file ${request.sessionName}`,
+        } as DELETELogResponse)
+      }
+    })
+  })
+
+const processRequest = async (
+  ctx: Koa.Context,
+  next: any,
+  requestFunction: (request: any) => Promise<any>,
+  errorHandler: (request: any) => RejectionResponse,
+) => {
+  const request = await unwrapStream(ctx.req)
+  const requestPromise = requestFunction(request)
+  next()
+  try {
+    ctx.response.body = JSON.stringify(await requestPromise)
+  } catch {
+    const rejection = errorHandler(request)
+    ctx.response.status = rejection.status
+    ctx.response.body = JSON.stringify(rejection.body)
+  }
+}
+
+const requestLogs = (request: any) => listLogs()
+const requestLogsRejection = (request: any) =>
+  ({
+    status: 500,
+    body: {
+      error: 'unable to process request for log headers',
+    } as ErrorResponse,
+  } as RejectionResponse)
+
+const requestLog = (request: any) => grabLog(request as LogRequest)
+const requestLogRejection = (request: any) =>
+  ({
+    status: 400,
+    body: {
+      error:
+        typeof request.sessionName !== 'string'
+          ? 'no file requested'
+          : `file ${request.sessionName} not found`,
+    } as ErrorResponse,
+  } as RejectionResponse)
+
+const requestLogUpdate = (request: any) => updateLog(request as LogUpdate)
+const requestLogUpdateRejection = (request: any) =>
+  ({
+    status: 500,
+    body: {
+      error:
+        typeof request.sessionName !== 'string'
+          ? 'no file requested for update'
+          : `unable to process update for ${request.sessionName}`,
+    } as ErrorResponse,
+  } as RejectionResponse)
+
+const requestLogDelete = (request: any) => deleteLog(request as LogRequest)
+const requestLogDeleteRejection = (request: any) =>
+  ({
+    status: 500,
+    body: {
+      error:
+        typeof request.sessionName !== 'string'
+          ? 'no file requested for deletion'
+          : `unable to process delete for ${request.sessionName}`,
+    } as ErrorResponse,
+  } as RejectionResponse)
 
 app.use(
-  route.get('/logs', async (ctx, next) => {
-    const logsPromise = listLogs()
-    next()
-    ctx.response.body = await logsPromise
-  }),
+  route.get('/logs', (ctx, next) =>
+    processRequest(ctx, next, requestLogs, requestLogsRejection),
+  ),
 )
 
 app.use(
-  route.get('/log', async (ctx, next) => {
-    const request = (await unwrapStream(ctx.req)) as LogRequest
-    let cleanRequest: LogRequest
-    try {
-      cleanRequest = { ...request }
-    } catch {
-      ctx.response.status = 400
-      ctx.response.body = JSON.stringify({
-        error: 'malformed file retrieval request received',
-      })
-      return
-    }
-    const logPromise = grabLog(cleanRequest)
-    next()
-    try {
-      ctx.response.body = await logPromise
-    } catch {
-      ctx.response.status = 400
-      ctx.response.body =
-        typeof cleanRequest.sessionName !== 'string'
-          ? JSON.stringify({
-              error: 'no file requested',
-            })
-          : JSON.stringify({
-              error: `file ${cleanRequest.sessionName} not found`,
-            })
-    }
-  }),
+  route.get('/log', (ctx, next) =>
+    processRequest(ctx, next, requestLog, requestLogRejection),
+  ),
 )
 
 app.use(
-  route.post('/log', async (ctx, next) => {
-    const updateRequest = (await unwrapStream(ctx.req)) as LogUpdate
-    let update: LogUpdate
-    try {
-      update = { ...updateRequest }
-    } catch {
-      ctx.response.status = 400
-      ctx.response.body = JSON.stringify({ error: 'invalid update received' })
-      return
-    }
-    const updatePromise = updateLog(update)
-    next()
-    try {
-      ctx.response.body = await updatePromise
-    } catch {
-      ctx.response.status = 500
-      ctx.response.body =
-        typeof updateRequest.sessionName !== 'string'
-          ? JSON.stringify({
-              error: 'no file requested for update',
-            })
-          : JSON.stringify({
-              error: `unable to process update for ${
-                updateRequest.sessionName
-              }`,
-            })
-    }
-  }),
+  route.post('/log', (ctx, next) =>
+    processRequest(ctx, next, requestLogUpdate, requestLogUpdateRejection),
+  ),
 )
 
 app.use(
-  route.delete('/log', async (ctx, next) => {
-    const request = (await unwrapStream(ctx.req)) as LogRequest
-    let cleanRequest: LogRequest
-    try {
-      cleanRequest = { ...request }
-    } catch {
-      ctx.response.status = 400
-      ctx.response.body = JSON.stringify({
-        error: 'malformed file delete request received',
-      })
-      return
-    }
-    const deletePromise = deleteLog(cleanRequest)
-    next()
-    try {
-      ctx.response.body = await deletePromise
-    } catch {
-      ctx.response.status = 500
-      ctx.response.body =
-        typeof cleanRequest.sessionName !== 'string'
-          ? JSON.stringify({
-              error: 'no file requested for deletion',
-            })
-          : JSON.stringify({
-              error: `unable to process delete for ${cleanRequest.sessionName}`,
-            })
-    }
-  }),
+  route.delete('/log', (ctx, next) =>
+    processRequest(ctx, next, requestLogDelete, requestLogDeleteRejection),
+  ),
 )
 
-app.use(async ctx => {
+app.use(ctx => {
   ctx.status = 404
   ctx.body = JSON.stringify({
     error: 'This is not the request you meant to make',
