@@ -1,24 +1,5 @@
-const suits = {
-  hearts: 0,
-  spades: 1,
-  clubs: 2,
-  diamonds: 3,
-}
-
-type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
-
-type Card = {
-  suit: number
-  rank: number
-}
-
-function createCard(suit: keyof typeof suits, rank: Rank): Card {
-  return { suit: suits[suit], rank }
-}
-
-const card = {
-  create: createCard,
-}
+import { range } from '../utils/range'
+import { Card, suits } from './card'
 
 type Player = {
   hand: Card[]
@@ -108,14 +89,8 @@ function playerWithCard(
   }
 }
 
-function range(n: number): number[] {
-  const arr = Array(n)
-  for (let i = 0; i < n; i++) {
-    arr[i] = i
-  }
-  return arr
-}
-
+// TODO: how do we want to handle state mutation?
+// TODO: determine whether backprop for any potential methods need input AND error
 function playCard(
   { trick: { cards } }: State,
   player: Player,

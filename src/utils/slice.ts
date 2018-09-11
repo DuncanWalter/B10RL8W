@@ -23,7 +23,7 @@ function createSlice<L extends number>(
   }
 }
 
-function castSliceToArray<L extends number>(self: Slice<L>): T {
+function castSliceToArray<L extends number>(self: Slice<L>): number[] {
   const arr = new Array<number>(self.length)
   for (let i = 0; i < arr.length; i++) {
     arr[i] = slice.get(self, i)
