@@ -33,7 +33,7 @@ const sanitizeSessionName = (sessionName: string) =>
   sessionName
     .split('')
     .filter(ch => ch.match(validFileNameChars))
-    .join()
+    .join('')
 
 const updateVerified = (newLog: LogData, update: LogUpdate) =>
   newLog.agentType == update.agentType &&
@@ -90,47 +90,76 @@ const grabLog = (request: LogRequest) =>
 const updateLog = (update: LogUpdate) =>
   new Promise<POSTLogResponse>((resolve, reject) => {
     let fileName = sanitizeSessionName(update.sessionName)
-    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
+    fs.access(`.logs/${fileName}.json`, err => {
       if (err) {
-        console.error(`Error loading ${fileName}`)
-        console.error(err)
-        reject(err)
-      } else {
-        const logData = JSON.parse(data.toString('utf-8')) as LogData
-        let newLog: LogData
-        try {
-          newLog = {
-            ...logData,
-            gamesPlayed: logData.gamesPlayed + update.additionalGamesPlayed,
-            qualityWeights: update.newQualityWeights,
+        const currentTime = Date.now()
+        const newLog: LogData = {
+          agentType: update.agentType,
+          simplified: update.simplified,
+          suitCount: update.suitCount,
+          sessionName: update.sessionName,
+          gamesPlayed: update.additionalGamesPlayed,
+          creationTime: currentTime,
+          lastUpdate: currentTime,
+          qualityWeights: update.newQualityWeights,
+        }
+        fs.writeFile(`.logs/${fileName}.json`, JSON.stringify(newLog), err => {
+          if (err) {
+            console.error(`Error writing to ${fileName}.json`, err)
+            reject(err)
+          } else {
+            resolve({
+              message: `Successfully created file ${update.sessionName}`,
+            } as POSTLogResponse)
           }
-        } catch {
-          console.error(`Log file ${fileName}.json is malformed`, err)
-          reject(err)
-          return
-        }
-        if (!updateVerified) {
-          const error =
-            `Update request on ${fileName}.json does not match ` +
-            `original log:\nLog file: ${newLog}\nUpdate: ${update}`
-          console.error(error)
-          reject(error)
-        } else {
-          fs.writeFile(
-            `.logs/${fileName}.json`,
-            JSON.stringify(newLog),
-            err => {
-              if (err) {
-                console.error(`Error writing to ${fileName}.json`, err)
-                reject(err)
-              } else {
-                resolve({
-                  message: `Successfully updated file ${update.sessionName}`,
-                } as POSTLogResponse)
+        })
+      } else {
+        fs.readFile(`.logs/${fileName}.json`, (err, data) => {
+          if (err) {
+            console.error(`Error loading ${fileName}`)
+            console.error(err)
+            reject(err)
+          } else {
+            const logData = JSON.parse(data.toString('utf-8')) as LogData
+            let newLog: LogData
+            try {
+              newLog = {
+                ...logData,
+                gamesPlayed: logData.gamesPlayed + update.additionalGamesPlayed,
+                qualityWeights: update.newQualityWeights,
+                lastUpdate: Date.now(),
               }
-            },
-          )
-        }
+            } catch {
+              console.error(`Log file ${fileName}.json is malformed`, err)
+              reject(err)
+              return
+            }
+            if (!updateVerified) {
+              const error =
+                `Update request on ${fileName}.json does not match ` +
+                `original log:\nLog file: ${newLog}\nUpdate: ${update}`
+              console.error(error)
+              reject(error)
+            } else {
+              fs.writeFile(
+                `.logs/${fileName}.json`,
+                JSON.stringify(newLog),
+                err => {
+                  if (err) {
+                    console.error(`Error writing to ${fileName}.json`, err)
+                    reject(err)
+                  } else {
+                    resolve({
+                      message: `Successfully updated file ${
+                        update.sessionName
+                      }`,
+                    } as POSTLogResponse)
+                  }
+                },
+              )
+            }
+          }
+        })
       }
     })
   })
@@ -168,8 +197,8 @@ const processRequest = async (
   }
 }
 
-const requestLogs = (request: any) => listLogs()
-const requestLogsRejection = (request: any) =>
+const requestLogs = () => listLogs()
+const requestLogsRejection = () =>
   ({
     status: 500,
     body: {
@@ -177,8 +206,8 @@ const requestLogsRejection = (request: any) =>
     } as ErrorResponse,
   } as RejectionResponse)
 
-const requestLog = (request: any) => grabLog(request as LogRequest)
-const requestLogRejection = (request: any) =>
+const requestLog = (request: LogRequest) => grabLog(request)
+const requestLogRejection = (request: LogRequest) =>
   ({
     status: 400,
     body: {
@@ -189,8 +218,8 @@ const requestLogRejection = (request: any) =>
     } as ErrorResponse,
   } as RejectionResponse)
 
-const requestLogUpdate = (request: any) => updateLog(request as LogUpdate)
-const requestLogUpdateRejection = (request: any) =>
+const requestLogUpdate = (request: LogUpdate) => updateLog(request)
+const requestLogUpdateRejection = (request: LogUpdate) =>
   ({
     status: 500,
     body: {
@@ -201,8 +230,8 @@ const requestLogUpdateRejection = (request: any) =>
     } as ErrorResponse,
   } as RejectionResponse)
 
-const requestLogDelete = (request: any) => deleteLog(request as LogRequest)
-const requestLogDeleteRejection = (request: any) =>
+const requestLogDelete = (request: LogRequest) => deleteLog(request)
+const requestLogDeleteRejection = (request: LogRequest) =>
   ({
     status: 500,
     body: {

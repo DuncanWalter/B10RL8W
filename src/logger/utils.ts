@@ -7,16 +7,17 @@ type LogBase = {
     | 'card-counting'
     | 'context-learning'
   simplified: boolean
-  gamesPlayed: number
   suitCount: number
   sessionName: string
 }
 type LogDataAttributes = {
+  gamesPlayed: number
   creationTime: number
   lastUpdate: number
   qualityWeights: number[][][]
 }
 type LogHeaderAttributes = {
+  gamesPlayed: number
   lastUpdate: number
 }
 type LogUpdateAttributes = {
@@ -58,10 +59,14 @@ export function unwrapStream(stream: Stream) {
     })
     stream.once('end', () => {
       const allData = data.join()
-      if (allData === '') {
+      if (allData === '' || allData === undefined) {
         resolve(undefined)
       } else {
-        resolve(JSON.parse(allData))
+        try {
+          resolve(JSON.parse(allData))
+        } catch (err) {
+          resolve(allData)
+        }
       }
     })
     stream.on('error', err => reject(err))
