@@ -243,6 +243,8 @@ export function playGame(
     )
   }
 
+  // NOTE: if it is ever needed for testing, this could be broken out into
+  // a function to make testing the playCard and playRound functions feasible
   let state: State = {
     players: players as [Player, Player, Player, Player],
     trick: { suit: null, cards: [] },
