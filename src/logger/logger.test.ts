@@ -11,21 +11,22 @@ import { unwrapStream } from './utils'
 import * as http from 'http'
 
 const port = 8378
-const server = app.listen(port)
 
-const requestOptions = (path: string, method: string) => ({
-  hostname: '127.0.0.1',
-  port: port,
-  path: path,
-  method: method,
-})
+function requestOptions(path: string, method: string) {
+  return {
+    hostname: '127.0.0.1',
+    port,
+    path,
+    method,
+  }
+}
 
 const testFileContents: LogData = {
   agentType: 'contextless',
   simplified: true,
-  gamesPlayed: 0,
+  gamesPlayed: 1,
   suitCount: 4,
-  sessionName: 'testie-boi',
+  sessionName: 'test-session',
   creationTime: 1536452406529,
   lastUpdate: 1536452406529,
   qualityWeights: [[[918]]],
@@ -35,112 +36,107 @@ const testFileUpdate: LogUpdate = {
   agentType: 'contextless',
   simplified: true,
   suitCount: 4,
-  sessionName: 'testie-boi',
+  sessionName: 'test-session',
   additionalGamesPlayed: 1,
   newQualityWeights: [[[9001]]],
 }
 
-const cleanup = (done: jest.DoneCallback) => {
-  server.close(done)
+function testCreateLog(): Promise<void> {
+  return new Promise(resolve => {
+    const postLogRequest = http.request(
+      requestOptions('/log', 'POST'),
+      async res => {
+        expect(res.statusCode).toBe(200)
+        resolve()
+      },
+    )
+    postLogRequest.write(JSON.stringify(testFileUpdate))
+    postLogRequest.end()
+  })
 }
 
-const testCreateLog = (done: jest.DoneCallback) => {
-  const postLogRequest = http.request(
-    requestOptions('/log', 'POST'),
-    async res => {
-      expect(((await unwrapStream(res)) as POSTLogResponse).message).toBe(
-        `Successfully created file ${testFileContents.sessionName}`,
-      )
-      testGetLogs(done)
-    },
-  )
-  postLogRequest.write(JSON.stringify(testFileContents))
-  postLogRequest.end()
+function testGetLogs(): Promise<void> {
+  return new Promise(resolve => {
+    const getLogsRequest = http.request(
+      requestOptions('/logs', 'GET'),
+      async res => {
+        const logs = (await unwrapStream<GETLogsResponse>(res)).logs
+        console.log(logs)
+        const testLog = logs.find(
+          ({ sessionName }) => sessionName === 'test-session',
+        )
+        expect(testLog).toBeTruthy()
+        expect(testLog!.agentType).toBe('contextless')
+
+        resolve()
+      },
+    )
+    getLogsRequest.end()
+  })
 }
 
-const testGetLogs = (done: jest.DoneCallback) => {
-  const getLogsRequest = http.request(
-    requestOptions('/logs', 'GET'),
-    async res => {
-      console.log(await unwrapStream(res))
-      //TODO we are not getting past this await statement
-      expect(((await unwrapStream(res)) as GETLogsResponse).logs).toContain({
-        sessionName: 'testie-boi',
-        agentType: 'contextless',
-        simplified: true,
-        suitCount: 4,
-        gamesPlayed: 0,
-        lastUpdate: 1536452406529,
-      })
-      console.log('Heading to U')
-      testUpdateLog(done)
-    },
-  )
-  getLogsRequest.end()
+function testUpdateLog(): Promise<void> {
+  return new Promise(resolve => {
+    const updateLogRequest = http.request(
+      requestOptions('/log', 'POST'),
+      async res => {
+        expect(res.statusCode).toBe(200)
+        resolve()
+      },
+    )
+    updateLogRequest.write(JSON.stringify(testFileUpdate))
+    updateLogRequest.end()
+  })
 }
 
-const testUpdateLog = (done: jest.DoneCallback) => {
-  console.log('starting U')
-  const updateLogRequest = http.request(
-    requestOptions('/log', 'POST'),
-    async res => {
-      console.log('U', await unwrapStream(res))
-      expect(((await unwrapStream(res)) as POSTLogResponse).message).toBe(
-        `Successfully updated file ${testFileContents.sessionName}`,
-      )
-      testGetLog(done)
-    },
-  )
-  updateLogRequest.write(JSON.stringify(testFileUpdate))
-  updateLogRequest.end()
-  console.log('We got here')
+function testGetLog(): Promise<void> {
+  return new Promise(resolve => {
+    const getLogRequest = http.request(
+      requestOptions('/log?sessionName:test-session', 'GET'),
+      async res => {
+        const log = (await unwrapStream<GETLogResponse>(res)).log
+        expect(log).toBeTruthy()
+        throw new Error('TODO:')
+        resolve()
+      },
+    )
+    getLogRequest.end()
+  })
 }
 
-const testGetLog = (done: jest.DoneCallback) => {
-  const getLogRequest = http.request(
-    requestOptions('/log', 'GET'),
-    async res => {
-      const updateTime = ((await unwrapStream(res)) as GETLogResponse).log
-        .lastUpdate
-      expect(((await unwrapStream(res)) as GETLogResponse).log).toBe({
-        agentType: 'contextless',
-        simplified: true,
-        gamesPlayed: 1,
-        suitCount: 4,
-        sessionName: 'testie-boi',
-        creationTime: 1536452406529,
-        lastUpdate: updateTime,
-        qualityWeights: [[[9001]]],
-      })
-      testDeleteLog(done)
-    },
-  )
-  getLogRequest.end()
-}
-
-const testDeleteLog = (done: jest.DoneCallback) => {
-  const deleteLogRequest = http.request(
-    requestOptions('/log', 'GET'),
-    async res => {
-      expect(((await unwrapStream(res)) as DELETELogResponse).message).toBe(
-        `Successfully deleted file ${testFileContents.sessionName}`,
-      )
-      cleanup(done)
-    },
-  )
-  deleteLogRequest.end()
+function testDeleteLog(): Promise<void> {
+  return new Promise(resolve => {
+    const deleteLogRequest = http.request(
+      requestOptions('/log', 'GET'),
+      async res => {
+        expect(((await unwrapStream(res)) as DELETELogResponse).message).toBe(
+          `Successfully deleted file ${testFileContents.sessionName}`,
+        )
+        resolve()
+      },
+    )
+    deleteLogRequest.end()
+  })
 }
 
 test(
   'The process of creating a new log, checking its existence, updating it, ' +
     'and deleting it will occur without error',
-  done => {
+  async done => {
     // TODO
     // First we create a new log (with get log)
     // Then we check the existence of the new log (with get logs)
     // Then we update the new log (with post log)
     // Lastly, we delete the log (with delete log)
-
-    testCreateLog(done)
+    const server = app.listen(port)
+    try {
+      await testCreateLog()
+      await testGetLogs()
+      await testUpdateLog()
+      await testGetLog()
+      await testDeleteLog()
+    } finally {
+      server.close(done)
+    }
   },
 )

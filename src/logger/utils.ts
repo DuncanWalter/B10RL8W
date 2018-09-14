@@ -47,7 +47,7 @@ export type GETLogResponse = {
 export type POSTLogResponse = DefaultResponse
 export type DELETELogResponse = DefaultResponse
 
-export function unwrapStream(stream: Stream) {
+export function unwrapStream<T>(stream: Stream): Promise<T> {
   return new Promise<any>((resolve, reject) => {
     const data: string[] = []
     stream.on('data', chunk => {

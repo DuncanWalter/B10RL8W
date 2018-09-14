@@ -1,6 +1,7 @@
-import * as fs from 'fs'
+import * as fs from 'fs-extra'
 import * as Koa from 'koa'
 import * as route from 'koa-route'
+import * as path from 'path'
 import { DELETELogResponse } from './utils'
 import { ErrorResponse } from './utils'
 import { GETLogResponse } from './utils'
@@ -11,6 +12,13 @@ import { LogHeader } from './utils'
 import { LogRequest } from './utils'
 import { LogUpdate } from './utils'
 import { unwrapStream } from './utils'
+
+const pwd = process.env.PWD
+if (pwd === undefined) {
+  throw Error(
+    'Cannot determine the present working directory required for storing logs',
+  )
+}
 
 export const app = new Koa()
 
@@ -35,28 +43,25 @@ const sanitizeSessionName = (sessionName: string) =>
     .filter(ch => ch.match(validFileNameChars))
     .join('')
 
-const updateVerified = (newLog: LogData, update: LogUpdate) =>
-  newLog.agentType == update.agentType &&
-  newLog.simplified == update.simplified &&
-  newLog.suitCount == update.suitCount &&
-  newLog.sessionName == update.sessionName
+// NOTE: see below comment; was not being called
+// const updateVerified = (newLog: LogData, update: LogUpdate) =>
+//   newLog.agentType == update.agentType &&
+//   newLog.simplified == update.simplified &&
+//   newLog.suitCount == update.suitCount &&
+//   newLog.sessionName == update.sessionName
 
 const validFileNameChars = /[a-zA-Z0-9\_]/
 
 const listLogs = () =>
   new Promise<GETLogsResponse>((resolve, reject) => {
-    fs.readdir('.logs/', (err, files) => {
+    fs.readdir(path.join(pwd, '.logs/'), (err, files) => {
       if (err || files === []) {
         reject('There are no files to read')
       } else {
-        // message += files
-        const expandSimplified = (simplified: boolean) =>
-          simplified ? 'simplified' : 'complete'
-
         let filePromises = files.filter(file => file.slice(-5) === '.json').map(
           file =>
             new Promise<LogHeader>(resolve => {
-              fs.readFile('.logs/' + file, (err, data) => {
+              fs.readFile(path.join(pwd, '.logs/', file), (err, data) => {
                 if (err) {
                   console.error(`Error loading ${file}`, err)
                 } else {
@@ -76,98 +81,64 @@ const listLogs = () =>
 const grabLog = (request: LogRequest) =>
   new Promise<GETLogResponse>((resolve, reject) => {
     let fileName = sanitizeSessionName(request.sessionName)
-    fs.readFile(`.logs/${fileName}.json`, (err, data) => {
+    fs.readFile(path.join(pwd, '.logs', `${fileName}.json`), (err, data) => {
       if (err) {
         console.error(`Error loading ${fileName}.json`, err)
         reject(err)
       } else {
         const log = JSON.parse(data.toString('utf-8')) as LogData
-        resolve({ log: log } as GETLogResponse)
+        resolve({ log } as GETLogResponse)
       }
     })
   })
 
-const updateLog = (update: LogUpdate) =>
-  new Promise<POSTLogResponse>((resolve, reject) => {
-    let fileName = sanitizeSessionName(update.sessionName)
-    fs.access(`.logs/${fileName}.json`, err => {
-      if (err) {
-        const currentTime = Date.now()
-        const newLog: LogData = {
-          agentType: update.agentType,
-          simplified: update.simplified,
-          suitCount: update.suitCount,
-          sessionName: update.sessionName,
-          gamesPlayed: update.additionalGamesPlayed,
-          creationTime: currentTime,
-          lastUpdate: currentTime,
-          qualityWeights: update.newQualityWeights,
-        }
-        fs.writeFile(`.logs/${fileName}.json`, JSON.stringify(newLog), err => {
-          if (err) {
-            console.error(`Error writing to ${fileName}.json`, err)
-            reject(err)
-          } else {
-            resolve({
-              message: `Successfully created file ${update.sessionName}`,
-            } as POSTLogResponse)
-          }
-        })
-      } else {
-        fs.readFile(`.logs/${fileName}.json`, (err, data) => {
-          if (err) {
-            console.error(`Error loading ${fileName}`)
-            console.error(err)
-            reject(err)
-          } else {
-            const logData = JSON.parse(data.toString('utf-8')) as LogData
-            let newLog: LogData
-            try {
-              newLog = {
-                ...logData,
-                gamesPlayed: logData.gamesPlayed + update.additionalGamesPlayed,
-                qualityWeights: update.newQualityWeights,
-                lastUpdate: Date.now(),
-              }
-            } catch {
-              console.error(`Log file ${fileName}.json is malformed`, err)
-              reject(err)
-              return
-            }
-            if (!updateVerified) {
-              const error =
-                `Update request on ${fileName}.json does not match ` +
-                `original log:\nLog file: ${newLog}\nUpdate: ${update}`
-              console.error(error)
-              reject(error)
-            } else {
-              fs.writeFile(
-                `.logs/${fileName}.json`,
-                JSON.stringify(newLog),
-                err => {
-                  if (err) {
-                    console.error(`Error writing to ${fileName}.json`, err)
-                    reject(err)
-                  } else {
-                    resolve({
-                      message: `Successfully updated file ${
-                        update.sessionName
-                      }`,
-                    } as POSTLogResponse)
-                  }
-                },
-              )
-            }
-          }
-        })
+const updateLog = async (update: LogUpdate) => {
+  const fileName = sanitizeSessionName(update.sessionName)
+  await fs.ensureDir(path.join(pwd, '.logs'))
+
+  let newLog: LogData
+
+  try {
+    await fs.stat(path.join(pwd, '.logs', `${fileName}.json`))
+    const logContent = JSON.parse(
+      (await fs.readFile(path.join(pwd, '.logs', `${fileName}.json`))).toString(
+        'utf8',
+      ),
+    )
+
+    try {
+      newLog = {
+        ...logContent,
+        gamesPlayed: logContent.gamesPlayed + update.additionalGamesPlayed,
+        qualityWeights: update.newQualityWeights,
+        lastUpdate: Date.now(),
       }
-    })
-  })
+    } catch {
+      throw new Error(`Log file ${fileName}.json is malformed`)
+    }
+  } catch {
+    const currentTime = Date.now()
+    newLog = {
+      agentType: update.agentType,
+      simplified: update.simplified,
+      suitCount: update.suitCount,
+      sessionName: update.sessionName,
+      gamesPlayed: update.additionalGamesPlayed,
+      creationTime: currentTime,
+      lastUpdate: currentTime,
+      qualityWeights: update.newQualityWeights,
+    }
+  }
+  return fs.writeFile(
+    path.join(pwd, '.logs', `${fileName}.json`),
+    JSON.stringify(newLog),
+  )
+}
 
 const deleteLog = (request: LogRequest) =>
   new Promise<DELETELogResponse>((resolve, reject) => {
     let fileName = sanitizeSessionName(request.sessionName)
-    fs.unlink(`.logs/${fileName}.json`, err => {
+    fs.unlink(path.join(pwd, '.logs', `${fileName}.json`), err => {
       if (err) {
         console.error(`Error deleting ${fileName}.json`, err)
         reject(err)
@@ -181,19 +152,18 @@ const deleteLog = (request: LogRequest) =>
 
 const processRequest = async (
   ctx: Koa.Context,
-  next: any,
   requestFunction: (request: any) => Promise<any>,
   errorHandler: (request: any) => RejectionResponse,
 ) => {
   const request = await unwrapStream(ctx.req)
-  const requestPromise = requestFunction(request)
-  next()
   try {
-    ctx.response.body = JSON.stringify(await requestPromise)
-  } catch {
-    const rejection = errorHandler(request)
-    ctx.response.status = rejection.status
-    ctx.response.body = JSON.stringify(rejection.body)
+    ctx.response.body = await requestFunction(request)
+    ctx.response.status = 200
+  } catch (err) {
+    const { status, body } = errorHandler(request)
+    ctx.response.body = body
+    ctx.response.status = status
+    console.error(err)
   }
 }
 
@@ -243,32 +213,32 @@ const requestLogDeleteRejection = (request: LogRequest) =>
   } as RejectionResponse)
 
 app.use(
-  route.get('/logs', (ctx, next) =>
-    processRequest(ctx, next, requestLogs, requestLogsRejection),
+  route.get('/logs', ctx =>
+    processRequest(ctx, requestLogs, requestLogsRejection),
   ),
 )
 
 app.use(
-  route.get('/log', (ctx, next) =>
-    processRequest(ctx, next, requestLog, requestLogRejection),
+  route.get('/log', ctx =>
+    processRequest(ctx, requestLog, requestLogRejection),
   ),
 )
 
 app.use(
-  route.post('/log', (ctx, next) =>
-    processRequest(ctx, next, requestLogUpdate, requestLogUpdateRejection),
+  route.post('/log', ctx =>
+    processRequest(ctx, requestLogUpdate, requestLogUpdateRejection),
   ),
 )
 
 app.use(
-  route.delete('/log', (ctx, next) =>
-    processRequest(ctx, next, requestLogDelete, requestLogDeleteRejection),
+  route.delete('/log', ctx =>
+    processRequest(ctx, requestLogDelete, requestLogDeleteRejection),
   ),
 )
 
 app.use(ctx => {
   ctx.status = 404
   ctx.body = JSON.stringify({
-    error: 'This is not the request you meant to make',
+    error: 'This is not the endpoint you are looking for',
   })
 })
