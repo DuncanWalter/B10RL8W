@@ -1,4 +1,5 @@
 import { suits, card, Card } from './card'
+import { Player } from './player'
 import {
   trickPoints,
   Trick,
@@ -113,7 +114,7 @@ test('Legal moves are correctly identified', () => {
 })
 
 test('Plays a game and produces agent histories', () => {
-  const policy = (state: State, actions: Card[]) =>
+  const policy = (state: State, player: Player, actions: Card[]) =>
     actions.map(action => ({ card: action, quality: Math.random() }))
 
   const history = playGame([policy, policy, policy, policy], false)

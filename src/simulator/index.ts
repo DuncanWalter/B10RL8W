@@ -1,6 +1,6 @@
 import { range } from '../utils/range'
 import { Card, suits, card } from './card'
-import { Player, Quality, createPlayer } from './player'
+import { Player, Policy, createPlayer } from './player'
 
 export type Trick = {
   suit: number | null
@@ -16,8 +16,12 @@ export type State = {
 }
 
 export function trickWinner({ suit, cards }: Trick): Card | null {
-  return cards.reduce((winner: null | Card, card: Card) => {
-    if (card.suit === suit && (winner === null || card.rank > winner.rank)) {
+  return cards.reduce((winner: null | Card, card?: Card) => {
+    if (
+      card !== undefined &&
+      card.suit === suit &&
+      (winner === null || card.rank > winner.rank)
+    ) {
       return card
     } else {
       return winner
@@ -144,7 +148,7 @@ function playRound(startState: State): State {
     const { players, trickLeader } = state
     const player = players[(trickLeader + i) % 4]
     const plays = validPlays(state, player.hand)
-    const play = player.quality(state, plays).reduce(
+    const play = player.policy(state, player, plays).reduce(
       (selection, { card, quality }) => {
         if (selection === null || quality > selection.quality) {
           return { card, quality }
@@ -218,7 +222,7 @@ function playRound(startState: State): State {
 }
 
 export function playGame(
-  policies: [Quality, Quality, Quality, Quality],
+  policies: [Policy, Policy, Policy, Policy],
   simplified: boolean,
   random: () => number = Math.random,
 ) {
