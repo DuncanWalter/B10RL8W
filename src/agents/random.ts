@@ -8,6 +8,10 @@ const seedRandom: (seed: number) => () => number = (seed: number) => Math.random
 export function createRandomPolicy(seed: number): Policy {
   const random = seedRandom(seed)
   return (state: State, player: Player, actions: Card[]) => {
-    return actions.map(card => ({ card, quality: random() }))
+    return actions.map(action => ({
+      action,
+      quality: random(),
+      feedTrace: player.score as any,
+    }))
   }
 }

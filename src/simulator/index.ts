@@ -1,6 +1,6 @@
 import { range } from '../utils/range'
 import { Card, suits, card } from './card'
-import { Player, Policy, createPlayer } from './player'
+import { Player, Policy, createPlayer, ActionSummary } from './player'
 
 export type Trick = {
   suit: number | null
@@ -116,11 +116,11 @@ function shuffleDeck(deck: Card[], random: () => number = Math.random): void {
 function playCard(
   state: State,
   actor: Player,
-  { card, quality }: { card: Card; quality: number },
+  { action, quality, feedTrace }: ActionSummary,
 ): State {
   const { trick, players } = state
   const { suit, cards } = trick
-  actor.recordAction(state, card, quality)
+  actor.recordAction(state, action, quality, feedTrace)
   return {
     ...state,
     players: players.map(
@@ -128,16 +128,16 @@ function playCard(
         player === actor
           ? {
               ...player,
-              hand: player.hand.filter(handCard => handCard !== card),
+              hand: player.hand.filter(handCard => handCard !== action),
             }
           : player,
     ) as [Player, Player, Player, Player],
     trick: {
-      suit: suit === null ? card.suit : suit,
-      cards: [...cards, card],
+      suit: suit === null ? action.suit : suit,
+      cards: [...cards, action],
     },
     heartsBroken:
-      state.heartsBroken || cardPoints(card, state.simplified) !== 0,
+      state.heartsBroken || cardPoints(action, state.simplified) !== 0,
   }
 }
 
@@ -149,14 +149,15 @@ function playRound(startState: State): State {
     const player = players[(trickLeader + i) % 4]
     const plays = validPlays(state, player.hand)
     const play = player.policy(state, player, plays).reduce(
-      (selection, { card, quality }) => {
+      (selection, summary: ActionSummary) => {
+        const { action, quality, feedTrace } = summary
         if (selection === null || quality > selection.quality) {
-          return { card, quality }
+          return summary
         } else {
           return selection
         }
       },
-      null as null | { quality: number; card: Card },
+      null as null | ActionSummary,
     )
     if (play !== null) {
       const newState = playCard(state, player, play)

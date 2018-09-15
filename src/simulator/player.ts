@@ -1,11 +1,17 @@
 import { Card } from './card'
 import { State } from './index'
 
+export type ActionSummary = {
+  action: Card
+  quality: number
+  feedTrace: number[][]
+}
+
 export type Policy = (
   globalState: State,
-  playerState: Player,
+  agentState: Player,
   actions: Card[],
-) => { card: Card; quality: number }[]
+) => ActionSummary[]
 
 export type History = {
   reward: number
@@ -13,6 +19,7 @@ export type History = {
   actor: Player
   action: Card | null
   quality: number
+  feedTrace: number[][]
 }
 
 export type Player = {
@@ -20,7 +27,12 @@ export type Player = {
   score: number
   policy: Policy
   assignReward(reward: number): void
-  recordAction(state: State, action: Card, quality: number): void
+  recordAction(
+    state: State,
+    action: Card,
+    quality: number,
+    feedTrace: number[][],
+  ): void
   terminate(): History[]
 }
 
@@ -34,13 +46,19 @@ export function createPlayer(policy: Policy, hand: Card[]) {
     assignReward(reward: number) {
       pendingReward += reward
     },
-    recordAction(state: State, action: Card, quality: number) {
+    recordAction(
+      state: State,
+      action: Card,
+      quality: number,
+      feedTrace: number[][],
+    ) {
       history.push({
         reward: pendingReward,
         state,
         actor: this,
         action,
         quality,
+        feedTrace,
       })
       pendingReward = 0
     },
@@ -51,6 +69,7 @@ export function createPlayer(policy: Policy, hand: Card[]) {
         actor: this,
         action: null,
         quality: 0,
+        feedTrace: [[]],
       })
       pendingReward = 0
       const savedHistory = history

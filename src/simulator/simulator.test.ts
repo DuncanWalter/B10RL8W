@@ -8,6 +8,8 @@ import {
   playGame,
   State,
 } from './index'
+import { createRandomPolicy } from '../agents/random'
+import { interpretHistory, FeedBack } from '../agents/history'
 
 test('Tricks are scored correctly', () => {
   const trick: Trick = {
@@ -114,8 +116,21 @@ test('Legal moves are correctly identified', () => {
 })
 
 test('Plays a game and produces agent histories', () => {
-  const policy = (state: State, player: Player, actions: Card[]) =>
-    actions.map(action => ({ card: action, quality: Math.random() }))
-
+  const policy = createRandomPolicy(1234)
   const history = playGame([policy, policy, policy, policy], false)
+  expect(history.length).toEqual(4)
+})
+
+test('Plays a game and interprets the agent histories into training data', () => {
+  const policy = createRandomPolicy(1234)
+  const trainingData = playGame([policy, policy, policy, policy], false)
+    .map(interpretHistory)
+    .reduce(
+      (acc, { feedBack }) => {
+        acc.push(...feedBack)
+        return acc
+      },
+      [] as FeedBack[],
+    )
+  expect(trainingData.length).toEqual(52)
 })
