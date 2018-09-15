@@ -21,7 +21,7 @@ function createCard(suit: keyof typeof suits, rank: Rank): Card {
 }
 
 // NOTE: currently using the most expressive "reasonable" form, which has 6
-// components: exists, hearts, diamonds, spades, clubs, rank
+// NOTE: components: exists, hearts, diamonds, spades, clubs, rank
 function* cardData(card?: Card): IterableIterator<number> {
   if (card === undefined) {
     for (let i of range(Object.keys(suits).length + 2)) {

@@ -2,7 +2,6 @@ import { Player } from '../simulator/player'
 import { State } from '../simulator'
 import { Card, card } from '../simulator/card'
 import { range } from '../utils/range'
-import transitions from '@material-ui/core/styles/transitions'
 import { Agent } from '.'
 import { FeedBack } from './history'
 
