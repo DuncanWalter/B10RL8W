@@ -1,14 +1,6 @@
-import { suits, card, Card } from './card'
-import { Player } from './player'
-import {
-  trickPoints,
-  Trick,
-  validPlays,
-  trickWinner,
-  playGame,
-  State,
-} from './index'
-import { createRandomPolicy } from '../agents/random'
+import { suits, card } from './card'
+import { trickPoints, Trick, validPlays, trickWinner, playGame } from '.'
+import { createRandomAgent } from '../agents'
 import { interpretHistory, FeedBack } from '../agents/history'
 
 test('Tricks are scored correctly', () => {
@@ -116,13 +108,13 @@ test('Legal moves are correctly identified', () => {
 })
 
 test('Plays a game and produces agent histories', () => {
-  const policy = createRandomPolicy(1234)
+  const { policy } = createRandomAgent(1234)
   const history = playGame([policy, policy, policy, policy], false)
   expect(history.length).toEqual(4)
 })
 
 test('Plays a game and interprets the agent histories into training data', () => {
-  const policy = createRandomPolicy(1234)
+  const { policy } = createRandomAgent(1234)
   const trainingData = playGame([policy, policy, policy, policy], false)
     .map(interpretHistory)
     .reduce(
@@ -130,7 +122,7 @@ test('Plays a game and interprets the agent histories into training data', () =>
         acc.push(...feedBack)
         return acc
       },
-      [] as FeedBack[],
+      [] as FeedBack<number>[],
     )
   expect(trainingData.length).toEqual(52)
 })

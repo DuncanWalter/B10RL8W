@@ -1,6 +1,6 @@
 import { range } from '../utils/range'
 import { Card, suits, card } from './card'
-import { Player, Policy, createPlayer, ActionSummary } from './player'
+import { Player, Policy, createPlayer, ActionSummary, History } from './player'
 
 export type Trick = {
   suit: number | null
@@ -116,11 +116,11 @@ function shuffleDeck(deck: Card[], random: () => number = Math.random): void {
 function playCard(
   state: State,
   actor: Player,
-  { action, quality, feedTrace }: ActionSummary,
+  { action, quality, trace }: ActionSummary,
 ): State {
   const { trick, players } = state
   const { suit, cards } = trick
-  actor.recordAction(state, action, quality, feedTrace)
+  actor.recordAction(state, action, quality, trace)
   return {
     ...state,
     players: players.map(
@@ -150,7 +150,7 @@ function playRound(startState: State): State {
     const plays = validPlays(state, player.hand)
     const play = player.policy(state, player, plays).reduce(
       (selection, summary: ActionSummary) => {
-        const { action, quality, feedTrace } = summary
+        const { quality } = summary
         if (selection === null || quality > selection.quality) {
           return summary
         } else {
@@ -222,16 +222,16 @@ function playRound(startState: State): State {
   }
 }
 
-export function playGame(
-  policies: [Policy, Policy, Policy, Policy],
+export function playGame<N, E, S, W>(
+  policies: [Policy<N>, Policy<E>, Policy<S>, Policy<W>],
   simplified: boolean,
   random: () => number = Math.random,
-) {
+): [History<N>[], History<E>[], History<S>[], History<W>[]] {
   const deck = [...freshDeck()]
   shuffleDeck(deck, random)
 
   const players: Player[] = policies.map((policy, seat) =>
-    createPlayer(policy, deck.slice(seat * 13, (1 + seat) * 13)),
+    createPlayer<any>(policy, deck.slice(seat * 13, (1 + seat) * 13)),
   )
 
   const startingPlayer = playerWithCard(players, 'clubs', 2)
@@ -263,7 +263,8 @@ export function playGame(
   }
 
   return players.map(player => {
+    // TODO: I don't really like this reward setup
     player.assignReward(((simplified ? 3.25 : 6.5) - player.score) * 2)
     return player.terminate()
-  })
+  }) as [History<N>[], History<E>[], History<S>[], History<W>[]]
 }

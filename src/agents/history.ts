@@ -1,16 +1,16 @@
 import { History } from '../simulator/player'
 
-export type FeedBack = {
+export type FeedBack<F> = {
   actual: number
   expected: number
-  feedTrace: number[][]
+  trace: F
 }
 
-export function interpretHistory(
-  history: History[],
+export function interpretHistory<F>(
+  history: History<F>[],
 ): {
   reward: number
-  feedBack: FeedBack[]
+  feedBack: FeedBack<F>[]
 } {
   if (history.length === 0) {
     throw new Error('Game history is empty or was not terminated')
@@ -18,7 +18,7 @@ export function interpretHistory(
 
   const [head, ...tail] = history
 
-  if (head.state === null || head.action === null) {
+  if (head.terminal) {
     return {
       reward: head.reward,
       feedBack: [],
@@ -28,7 +28,7 @@ export function interpretHistory(
     rest.feedBack.push({
       actual: rest.reward,
       expected: head.quality,
-      feedTrace: head.feedTrace,
+      trace: head.trace,
     })
     rest.reward += head.reward
     return rest

@@ -1,7 +1,10 @@
-import { Player, Policy } from '../simulator/player'
+import { Player } from '../simulator/player'
 import { State } from '../simulator'
 import { Card, card } from '../simulator/card'
 import { range } from '../utils/range'
+import transitions from '@material-ui/core/styles/transitions'
+import { Agent } from '.'
+import { FeedBack } from './history'
 
 type ANN = {
   feed(
@@ -10,7 +13,7 @@ type ANN = {
     feedTrace: number[][]
     output: number[]
   }
-  backProp(feedBack: { feedTrace: number[][]; error: [] }[]): void
+  backProp(feedBack: { feedTrace: number[][]; error: number[] }[]): void
 }
 
 // TODO: move to a state file in the simulator
@@ -31,19 +34,27 @@ function* trickData({ cards }: { cards: Card[] }): IterableIterator<number> {
   }
 }
 
-export function createContextlessPolicy(net: ANN): Policy {
-  return ({ trick }: State, player: Player, actions: Card[]) => {
-    const stateData = [...handData(player.hand), ...trickData(trick)]
-    return (
-      actions
+export function createContextlessAgent(net: ANN): Agent<number[][]> {
+  return {
+    policy({ trick }: State, player: Player, actions: Card[]) {
+      // TODO: need to overhaul the state interpretations
+      const stateData = [...handData(player.hand), ...trickData(trick)]
+      return actions
         .map(action => [...stateData, ...card.data(action)])
-        // TODO: need some length utilities
         .map(data => net.feed(data as any))
         .map(({ feedTrace, output: [quality] }, index) => ({
           quality,
-          feedTrace,
+          trace: feedTrace,
           action: actions[index],
         }))
-    )
+    },
+    train(feedBack: FeedBack<number[][]>[]) {
+      net.backProp(
+        feedBack.map(({ expected, actual, trace }) => ({
+          error: [actual - expected],
+          feedTrace: trace,
+        })),
+      )
+    },
   }
 }

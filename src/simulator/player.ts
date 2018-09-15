@@ -1,44 +1,45 @@
 import { Card } from './card'
 import { State } from './index'
 
-export type ActionSummary = {
+export type ActionSummary<F = any> = {
   action: Card
   quality: number
-  feedTrace: number[][]
+  trace: F
 }
 
-export type Policy = (
+export type Policy<F = any> = (
   globalState: State,
-  agentState: Player,
+  agentState: Player<F>,
   actions: Card[],
-) => ActionSummary[]
+) => ActionSummary<F>[]
 
-export type History = {
-  reward: number
-  state: State | null
-  actor: Player
-  action: Card | null
-  quality: number
-  feedTrace: number[][]
-}
+export type History<F = any> =
+  | {
+      reward: number
+      state: State
+      actor: Player<F>
+      action: Card
+      quality: number
+      trace: F
+      terminal?: false
+    }
+  | {
+      reward: number
+      terminal: true
+    }
 
-export type Player = {
+export type Player<F = any> = {
   hand: Card[]
   score: number
-  policy: Policy
+  policy: Policy<F>
   assignReward(reward: number): void
-  recordAction(
-    state: State,
-    action: Card,
-    quality: number,
-    feedTrace: number[][],
-  ): void
-  terminate(): History[]
+  recordAction(state: State, action: Card, quality: number, trace: F): void
+  terminate(): History<F>[]
 }
 
-export function createPlayer(policy: Policy, hand: Card[]) {
+export function createPlayer<F>(policy: Policy<F>, hand: Card[]) {
   let pendingReward = 0
-  let history = [] as History[]
+  let history = [] as History<F>[]
   return {
     hand,
     score: 0,
@@ -46,30 +47,21 @@ export function createPlayer(policy: Policy, hand: Card[]) {
     assignReward(reward: number) {
       pendingReward += reward
     },
-    recordAction(
-      state: State,
-      action: Card,
-      quality: number,
-      feedTrace: number[][],
-    ) {
+    recordAction(state: State, action: Card, quality: number, trace: F) {
       history.push({
         reward: pendingReward,
         state,
         actor: this,
         action,
         quality,
-        feedTrace,
+        trace,
       })
       pendingReward = 0
     },
     terminate() {
       history.push({
         reward: pendingReward,
-        state: null,
-        actor: this,
-        action: null,
-        quality: 0,
-        feedTrace: [[]],
+        terminal: true,
       })
       pendingReward = 0
       const savedHistory = history
