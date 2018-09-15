@@ -1,3 +1,4 @@
+import * as http from 'http'
 import { app } from './logger'
 import {
   GETLogsResponse,
@@ -6,9 +7,8 @@ import {
   LogUpdate,
   GETLogResponse,
   DELETELogResponse,
-} from './utils'
-import { unwrapStream } from './utils'
-import * as http from 'http'
+} from './types'
+import { unwrapStream } from '../utils/streamUtils'
 
 const port = 8378
 
