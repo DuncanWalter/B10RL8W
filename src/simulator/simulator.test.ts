@@ -1,12 +1,13 @@
-import { suits, card, Card } from './card'
 import {
+  suits,
+  card,
   trickPoints,
   Trick,
   validPlays,
   trickWinner,
   playGame,
-  State,
-} from './index'
+} from '.'
+import { createRandomAgent, interpretHistory, FeedBack } from '../agents'
 
 test('Tricks are scored correctly', () => {
   const trick: Trick = {
@@ -14,13 +15,13 @@ test('Tricks are scored correctly', () => {
     cards: [card.create('clubs', 3), card.create('diamonds', 12)],
   }
 
-  expect(trickPoints({ trick, simplified: true })).toEqual(0)
-  expect(trickPoints({ trick, simplified: false })).toEqual(0)
+  expect(trickPoints(trick, true)).toEqual(0)
+  expect(trickPoints(trick, false)).toEqual(0)
 
   trick.cards.push(card.create('hearts', 5), card.create('spades', 12))
 
-  expect(trickPoints({ trick, simplified: true })).toEqual(1)
-  expect(trickPoints({ trick, simplified: false })).toEqual(14)
+  expect(trickPoints(trick, true)).toEqual(1)
+  expect(trickPoints(trick, false)).toEqual(14)
 })
 
 test('Trick taking cards are correctly determined', () => {
@@ -113,8 +114,21 @@ test('Legal moves are correctly identified', () => {
 })
 
 test('Plays a game and produces agent histories', () => {
-  const policy = (state: State, actions: Card[]) =>
-    actions.map(action => ({ card: action, quality: Math.random() }))
-
+  const { policy } = createRandomAgent(1234)
   const history = playGame([policy, policy, policy, policy], false)
+  expect(history.length).toEqual(4)
+})
+
+test('Plays a game and interprets the agent histories into training data', () => {
+  const { policy } = createRandomAgent(1234)
+  const trainingData = playGame([policy, policy, policy, policy], false)
+    .map(interpretHistory)
+    .reduce(
+      (acc, { feedBack }) => {
+        acc.push(...feedBack)
+        return acc
+      },
+      [] as FeedBack<number>[],
+    )
+  expect(trainingData.length).toEqual(52)
 })

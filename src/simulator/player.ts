@@ -1,55 +1,66 @@
-import { Card } from './card'
-import { State } from './index'
+import { Card, State } from '.'
 
-export type Quality = (
-  state: State,
-  actions: Card[],
-) => { card: Card; quality: number }[]
-
-export type Player = {
-  hand: Card[]
-  score: number
-  quality: Quality
-  assignReward(reward: number): void
-  recordAction(state: State, action: Card, quality: number): void
-  terminate(): {
-    reward: number
-    state: State | null
-    action: Card | null
-    quality: number
-  }[]
+export type ActionSummary<F = any> = {
+  action: Card
+  quality: number
+  trace: F
 }
 
-export function createPlayer(policy: Quality, hand: Card[]) {
+export type Policy<F = any> = (
+  globalState: State,
+  agentState: Player<F>,
+  actions: Card[],
+) => ActionSummary<F>[]
+
+export type History<F = any> =
+  | {
+      reward: number
+      state: State
+      actor: Player<F>
+      action: Card
+      quality: number
+      trace: F
+      terminal?: false
+    }
+  | {
+      reward: number
+      terminal: true
+    }
+
+export type Player<F = any> = {
+  hand: Card[]
+  score: number
+  policy: Policy<F>
+  assignReward(reward: number): void
+  recordAction(state: State, action: Card, quality: number, trace: F): void
+  terminate(): History<F>[]
+}
+
+export function createPlayer<F>(policy: Policy<F>, hand: Card[]) {
   let pendingReward = 0
-  let history = [] as {
-    reward: number
-    state: State | null
-    action: Card | null
-    quality: number
-  }[]
+  let history = [] as History<F>[]
   return {
     hand,
     score: 0,
-    quality: policy,
+    policy,
     assignReward(reward: number) {
       pendingReward += reward
     },
-    recordAction(state: State, action: Card, quality: number) {
+    recordAction(state: State, action: Card, quality: number, trace: F) {
       history.push({
         reward: pendingReward,
         state,
+        actor: this,
         action,
         quality,
+        trace,
       })
       pendingReward = 0
     },
     terminate() {
       history.push({
         reward: pendingReward,
-        state: null,
-        action: null,
-        quality: 0,
+        terminal: true,
       })
       pendingReward = 0
       const savedHistory = history
