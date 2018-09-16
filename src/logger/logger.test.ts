@@ -42,8 +42,8 @@ function testGetLogs(): Promise<void> {
     const getLogsRequest = http.request(
       requestOptions('/logs', 'GET'),
       async res => {
+        expect(res.statusCode).toEqual(200)
         const logs = (await unwrapStream<GETLogsResponse>(res)).logs
-        console.log(logs)
         const testLog = logs.find(
           ({ sessionName }) => sessionName === 'test-session',
         )
@@ -74,11 +74,11 @@ function testUpdateLog(): Promise<void> {
 function testGetLog(): Promise<void> {
   return new Promise(resolve => {
     const getLogRequest = http.request(
-      requestOptions('/log?sessionName:test-session', 'GET'),
+      requestOptions('/log/test-session', 'GET'),
       async res => {
-        const log = (await unwrapStream<GETLogResponse>(res)).log
-        expect(log).toBeTruthy()
-        expect(log!.gamesPlayed).toBe(2)
+        expect(res.statusCode).toEqual(200)
+        const body = await unwrapStream<GETLogResponse>(res)
+        expect(body).toBeTruthy()
         resolve()
       },
     )
@@ -89,7 +89,7 @@ function testGetLog(): Promise<void> {
 function testDeleteLog(): Promise<void> {
   return new Promise(resolve => {
     const deleteLogRequest = http.request(
-      requestOptions('/log', 'GET'),
+      requestOptions('/log/test-session', 'DELETE'),
       async res => {
         expect(res.statusCode).toBe(200)
         resolve()

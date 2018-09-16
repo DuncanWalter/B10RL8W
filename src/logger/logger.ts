@@ -55,18 +55,22 @@ const validFileNameChars = /[a-zA-Z0-9\_]/
 
 async function listLogs() {
   await fs.ensureDir(path.join(pwd, '.logs'))
-  const logPromises = (await fs.readdir(path.join(pwd, '.logs/')))
+  const logPromises = (await fs.readdir(path.join(pwd, '.logs')))
     .filter(file => file.slice(-5) === '.json')
-    .map(async file => retrieveHeader((await fs.readJson(file)) as LogData))
+    .map(async file =>
+      retrieveHeader((await fs.readJson(
+        path.join(pwd, '.logs', file),
+      )) as LogData),
+    )
 
   return Promise.all(logPromises).then(results =>
     JSON.stringify({ logs: results } as GETLogsResponse),
   )
 }
 
-async function grabLog(request: LogRequest) {
+async function grabLog(session: string) {
   await fs.ensureDir(path.join(pwd, '.logs'))
-  const fileName = sanitizeSessionName(request.sessionName)
+  const fileName = sanitizeSessionName(session)
   return JSON.stringify((await fs.readJson(
     path.join(pwd, '.logs/', `${fileName}.json`),
   )) as GETLogResponse)
@@ -81,7 +85,7 @@ async function updateLog(update: LogUpdate) {
   const doUpdate = existingFilePaths.includes(filePath)
   const currentTime = Date.now()
   if (doUpdate) {
-    const logContent = (await fs.readJson(filePath)) as LogData
+    const logContent: LogData = await fs.readJson(filePath)
     try {
       newLog = {
         ...logContent,
@@ -92,7 +96,7 @@ async function updateLog(update: LogUpdate) {
     } catch {
       throw new Error(`Log file ${fileName}.json is malformed`)
     }
-    if (!updateValid) {
+    if (!updateValid(newLog, update)) {
       throw new Error(`Log file ${fileName}.json did not match request`)
     }
   } else {
@@ -107,7 +111,6 @@ async function updateLog(update: LogUpdate) {
       qualityWeights: update.newQualityWeights,
     }
   }
-
   return fs.writeJSON(filePath, newLog).then(() =>
     JSON.stringify({
       message: doUpdate
@@ -117,22 +120,23 @@ async function updateLog(update: LogUpdate) {
   )
 }
 
-async function deleteLog(request: LogRequest) {
+async function deleteLog(session: string) {
   await fs.ensureDir(path.join(pwd, '.logs'))
-  const fileName = sanitizeSessionName(request.sessionName)
+  const fileName = sanitizeSessionName(session)
   return fs.remove(path.join(pwd, '.logs/', `${fileName}.json`)).then(() =>
     JSON.stringify({
-      message: `Successfully deleted file ${request.sessionName}`,
+      message: `Successfully deleted file ${session}`,
     } as DELETELogResponse),
   )
 }
 
-async function processRequest(
+async function processRequest<Rest extends any[]>(
   ctx: Koa.Context,
-  requestFunction: (ctx: Koa.Context) => void,
+  requestFunction: (ctx: Koa.Context, ...rest: Rest) => Promise<void>,
+  ...rest: Rest
 ) {
   try {
-    requestFunction(ctx)
+    await requestFunction(ctx, ...rest)
   } catch (err) {
     ctx.response.body = JSON.stringify({
       error: 'Malformed request! Unable to process',
@@ -140,6 +144,7 @@ async function processRequest(
     ctx.response.status = 400
     console.error(err)
   }
+  return ctx
 }
 
 async function requestLogs(ctx: Koa.Context) {
@@ -154,17 +159,20 @@ async function requestLogs(ctx: Koa.Context) {
   }
 }
 
-async function requestLog(ctx: Koa.Context) {
-  const request = (await unwrapStream(ctx.req)) as LogRequest
+async function requestLog(ctx: Koa.Context, session?: string) {
+  if (session === undefined) {
+    throw new Error('Please specify a log to request')
+  }
   try {
-    ctx.response.body = await grabLog(request)
+    const body = await grabLog(session)
+    ctx.response.body = body
     ctx.response.status = 200
   } catch {
     ctx.response.body = JSON.stringify({
       error:
-        typeof request.sessionName !== 'string'
+        typeof session !== 'string'
           ? 'no file requested'
-          : `file ${request.sessionName} not found`,
+          : `file ${session}.json not found`,
     } as ErrorResponse)
     ctx.response.status = 400
   }
@@ -186,10 +194,10 @@ async function requestLogUpdate(ctx: Koa.Context) {
   }
 }
 
-async function requestLogDelete(ctx: Koa.Context) {
+async function requestLogDelete(ctx: Koa.Context, session: string) {
   const request = (await unwrapStream(ctx.req)) as LogRequest
   try {
-    ctx.response.body = await deleteLog(request)
+    ctx.response.body = await deleteLog(session)
     ctx.response.status = 200
   } catch {
     ctx.response.body = JSON.stringify({
@@ -202,16 +210,20 @@ async function requestLogDelete(ctx: Koa.Context) {
   }
 }
 
-app.use(route.get('/logs', async ctx => processRequest(ctx, requestLogs)))
-app.use(route.get('/log', async ctx => processRequest(ctx, requestLog)))
-app.use(route.post('/log', async ctx => processRequest(ctx, requestLogUpdate)))
+app.use(route.get('/logs', ctx => processRequest(ctx, requestLogs)))
 app.use(
-  route.delete('/log', async ctx => processRequest(ctx, requestLogDelete)),
+  route.get('/log/:session', (ctx, session) =>
+    processRequest(ctx, requestLog, session),
+  ),
 )
-console.log('Making server')
+app.use(route.post('/log', ctx => processRequest(ctx, requestLogUpdate)))
+app.use(
+  route.delete('/log/:session', (ctx, session) =>
+    processRequest(ctx, requestLogDelete, session),
+  ),
+)
 app.use(ctx => {
-  ctx.status = 418
-  console.log('here')
+  ctx.status = 404
   ctx.body = JSON.stringify({
     error: 'This is not the endpoint you are looking for',
   })
