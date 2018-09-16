@@ -9,13 +9,13 @@ test('Tricks are scored correctly', () => {
     cards: [card.create('clubs', 3), card.create('diamonds', 12)],
   }
 
-  expect(trickPoints({ trick, simplified: true })).toEqual(0)
-  expect(trickPoints({ trick, simplified: false })).toEqual(0)
+  expect(trickPoints(trick, true)).toEqual(0)
+  expect(trickPoints(trick, false)).toEqual(0)
 
   trick.cards.push(card.create('hearts', 5), card.create('spades', 12))
 
-  expect(trickPoints({ trick, simplified: true })).toEqual(1)
-  expect(trickPoints({ trick, simplified: false })).toEqual(14)
+  expect(trickPoints(trick, true)).toEqual(1)
+  expect(trickPoints(trick, false)).toEqual(14)
 })
 
 test('Trick taking cards are correctly determined', () => {

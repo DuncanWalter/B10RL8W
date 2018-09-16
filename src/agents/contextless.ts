@@ -1,7 +1,12 @@
 import { Player } from '../simulator/player'
-import { State } from '../simulator'
+import {
+  State,
+  Trick,
+  cardPoints,
+  trickWinner,
+  trickPoints,
+} from '../simulator'
 import { Card, card } from '../simulator/card'
-import { range } from '../utils/range'
 import { Agent } from '.'
 import { FeedBack } from './history'
 
@@ -15,32 +20,52 @@ type ANN = {
   backProp(feedBack: { feedTrace: number[][]; error: number[] }[]): void
 }
 
-// TODO: move to a state file in the simulator
-// TODO: represent as only the 5 most interesting cards in hand
-// TODO: also add one number saying how many cards there are in hand
-function* handData(hand: Card[]): IterableIterator<number> {
-  for (let i of range(13)) {
-    yield* card.data(hand[i])
-  }
+function* joinIterables(
+  a: Iterable<number>,
+  b: Iterable<number>,
+): IterableIterator<number> {
+  yield* a
+  yield* b
 }
 
-// TODO: move to a state file in the simulator
+// TODO: could also count the number of each suit in hand
+function handData(hand: Card[], simplified: boolean): Iterable<number> {
+  return hand
+    .map(card => ({
+      card,
+      score: card.rank + (cardPoints(card, simplified) === 0 ? 0 : 5),
+    }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 5)
+    .map(({ card: obj }) => card.data(obj))
+    .reduce(joinIterables, [hand.length])
+}
+
 // TODO: Represent as only a flag for whether the considered action would take
 // TODO: the trick, size of trick, and the points in the trick
-function* trickData({ cards }: { cards: Card[] }): IterableIterator<number> {
-  for (let i of range(3)) {
-    yield* card.data(cards[i])
-  }
+function trickData(
+  trick: Trick,
+  action: Card,
+  simplified: boolean,
+): Iterable<number> {
+  return [
+    trickWinner({ cards: [...trick.cards, action], suit: trick.suit }) ===
+    action
+      ? 1
+      : 0,
+    trick.cards.length,
+    trickPoints(trick, simplified),
+  ]
 }
 
 export function createContextlessAgent(net: ANN): Agent<number[][]> {
   return {
-    policy({ trick }: State, player: Player, actions: Card[]) {
+    policy({ trick, simplified }: State, player: Player, actions: Card[]) {
       // TODO: need to overhaul the state interpretations
-      const stateData = [...handData(player.hand), ...trickData(trick)]
+      const hand = [...handData(player.hand, simplified)]
       return actions
-        .map(action => [...stateData, ...card.data(action)])
-        .map(data => net.feed(data as any))
+        .map(action => [...hand, ...trickData(trick, action, simplified)])
+        .map(data => net.feed(data))
         .map(({ feedTrace, output: [quality] }, index) => ({
           quality,
           trace: feedTrace,

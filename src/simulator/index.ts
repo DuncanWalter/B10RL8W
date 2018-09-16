@@ -55,7 +55,7 @@ export function validPlays(
   }
 }
 
-function cardPoints(card: Card, simplified: boolean): number {
+export function cardPoints(card: Card, simplified: boolean): number {
   const isHeart = card.suit === suits.hearts
   const isSpade = card.suit === suits.spades
   const isQueen = card.rank === 12
@@ -68,13 +68,10 @@ function cardPoints(card: Card, simplified: boolean): number {
   }
 }
 
-export function trickPoints({
-  trick: { cards },
-  simplified,
-}: {
-  trick: Trick
-  simplified: boolean
-}): number {
+export function trickPoints(
+  { cards }: { cards: Card[] },
+  simplified: boolean,
+): number {
   return cards.reduce((total, card) => total + cardPoints(card, simplified), 0)
 }
 
@@ -175,7 +172,7 @@ function playRound(startState: State): State {
   } = state
 
   const card = trickWinner(state.trick)
-  const points = trickPoints(state)
+  const points = trickPoints(state.trick, state.simplified)
 
   if (card === null) {
     throw new Error('No trick winner could be determined at round end')
