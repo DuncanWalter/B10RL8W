@@ -202,12 +202,16 @@ async function requestLogDelete(ctx: Koa.Context) {
   }
 }
 
-app.use(route.get('/logs', ctx => processRequest(ctx, requestLogs)))
-app.use(route.get('/log', ctx => processRequest(ctx, requestLog)))
-app.use(route.post('/log', ctx => processRequest(ctx, requestLogUpdate)))
-app.use(route.delete('/log', ctx => processRequest(ctx, requestLogDelete)))
+app.use(route.get('/logs', async ctx => processRequest(ctx, requestLogs)))
+app.use(route.get('/log', async ctx => processRequest(ctx, requestLog)))
+app.use(route.post('/log', async ctx => processRequest(ctx, requestLogUpdate)))
+app.use(
+  route.delete('/log', async ctx => processRequest(ctx, requestLogDelete)),
+)
+console.log('Making server')
 app.use(ctx => {
-  ctx.status = 404
+  ctx.status = 418
+  console.log('here')
   ctx.body = JSON.stringify({
     error: 'This is not the endpoint you are looking for',
   })

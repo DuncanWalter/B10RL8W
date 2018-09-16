@@ -18,7 +18,7 @@ export function unwrapStream<T>(stream: Stream): Promise<T> {
         try {
           resolve(JSON.parse(allData))
         } catch (err) {
-          resolve(allData)
+          reject(err)
         }
       }
     })
