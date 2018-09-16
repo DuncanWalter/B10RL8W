@@ -1,7 +1,7 @@
 import * as Math from 'mathjs'
 import { sigmoid, sigmoidDeriv } from './ann_helper'
 
-export class Vanilla_ANN {
+class ANN {
   nodes: number[]
   epochs: number
   xData: Math.Matrix
@@ -40,7 +40,7 @@ export class Vanilla_ANN {
     return this.weights
   }
 
-  backprop() {
+  forwardprop() {
     for (let i = 0; i < this.epochs; i++) {
       // NOTE: will need to add bias terms in future
 
@@ -49,18 +49,15 @@ export class Vanilla_ANN {
       let activation0 = hidden0.map(sigmoid) as Math.Matrix
       let output = Math.multiply(activation0, this.weights[1])
 
-      let err = this.error(output as number[]) as Math.Matrix
+      let err = this.error(output as number[])
 
-      if (this.epochs % 5000 == 0) {
-        //console.log(err)
-        let errSum = 0
-        for (let i = 0; i < err.size()[0]; i++) {
-          errSum += err.get([i, 0])
-        }
-        console.log(errSum.toFixed(15))
-      }
+      return [err, activation0]
+    }
+  }
 
-      // back propagation
+  backprop(err: number[], activation0: Math.Matrix) {
+    // back propagation
+    for (let i = 0; i < this.epochs; i++) {
       let dz = Math.multiply(err, this.lr)
 
       this.weights[1] = Math.add(

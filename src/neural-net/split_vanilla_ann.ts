@@ -1,7 +1,7 @@
 import * as Math from 'mathjs'
 import { sigmoid, sigmoidDeriv } from './ann_helper'
 
-export class Vanilla_ANN {
+export class Split_Vanilla_ANN {
   nodes: number[]
   epochs: number
   xData: Math.Matrix
@@ -40,27 +40,27 @@ export class Vanilla_ANN {
     return this.weights
   }
 
-  backprop() {
+  forwardprop() {
+    let hidden0, output, err
+    let activation0: Math.Matrix = Math.matrix()
+
+    // TODO: will need to add bias terms in future
+
+    // forward propagtion
+    hidden0 = Math.multiply(this.xData, this.weights[0]) as Math.Matrix
+
+    //QUESTION: how to append row to matrix?
+    activation0 = hidden0.map(sigmoid) as Math.Matrix
+    output = Math.multiply(activation0, this.weights[1])
+
+    //err = this.error(output as number[])
+
+    return [output, activation0]
+  }
+
+  backprop(err: number[], activation0: Math.Matrix) {
+    // back propagation
     for (let i = 0; i < this.epochs; i++) {
-      // NOTE: will need to add bias terms in future
-
-      // forward propagtion
-      let hidden0 = Math.multiply(this.xData, this.weights[0]) as Math.Matrix
-      let activation0 = hidden0.map(sigmoid) as Math.Matrix
-      let output = Math.multiply(activation0, this.weights[1])
-
-      let err = this.error(output as number[]) as Math.Matrix
-
-      if (this.epochs % 5000 == 0) {
-        //console.log(err)
-        let errSum = 0
-        for (let i = 0; i < err.size()[0]; i++) {
-          errSum += err.get([i, 0])
-        }
-        console.log(errSum.toFixed(15))
-      }
-
-      // back propagation
       let dz = Math.multiply(err, this.lr)
 
       this.weights[1] = Math.add(
@@ -81,7 +81,7 @@ export class Vanilla_ANN {
   }
 
   error(output: number[]) {
-    // NOTE: will need to make more complex error calculation
+    // TODO: will need to make more complex error calculation
     return Math.subtract(this.yData, output)
   }
 }
