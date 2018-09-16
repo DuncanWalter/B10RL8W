@@ -1,7 +1,13 @@
-import { suits, card } from './card'
-import { trickPoints, Trick, validPlays, trickWinner, playGame } from '.'
-import { createRandomAgent } from '../agents'
-import { interpretHistory, FeedBack } from '../agents/history'
+import {
+  suits,
+  card,
+  trickPoints,
+  Trick,
+  validPlays,
+  trickWinner,
+  playGame,
+} from '.'
+import { createRandomAgent, interpretHistory, FeedBack } from '../agents'
 
 test('Tricks are scored correctly', () => {
   const trick: Trick = {

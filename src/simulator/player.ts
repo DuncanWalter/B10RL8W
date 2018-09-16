@@ -1,5 +1,4 @@
-import { Card } from './card'
-import { State } from './index'
+import { Card, State } from '.'
 
 export type ActionSummary<F = any> = {
   action: Card

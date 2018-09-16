@@ -6,6 +6,8 @@ export type Agent<F = any> = {
   train: (feedBack: FeedBack<F>[]) => void
 }
 
+export { FeedBack, interpretHistory } from './history'
+
 export { trainAgent } from './training'
 
 export { createRandomAgent } from './random'

@@ -1,4 +1,4 @@
-import { History } from '../simulator/player'
+import { History } from '../simulator'
 
 export type FeedBack<F> = {
   actual: number

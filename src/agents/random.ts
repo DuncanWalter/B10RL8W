@@ -1,6 +1,4 @@
-import { Player } from '../simulator/player'
-import { State } from '../simulator'
-import { Card } from '../simulator/card'
+import { Player, State, Card } from '../simulator'
 import { Agent } from '.'
 
 // TODO: make an actual prng (or import)

@@ -1,6 +1,5 @@
-import { Agent } from '.'
+import { Agent, interpretHistory, FeedBack } from '.'
 import { playGame } from '../simulator'
-import { interpretHistory, FeedBack } from './history'
 import { range } from '../utils/range'
 
 export function trainAgent<F>({ policy, train }: Agent<F>, games: number) {

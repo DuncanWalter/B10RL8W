@@ -1,14 +1,14 @@
-import { Player } from '../simulator/player'
 import {
+  Player,
   State,
   Trick,
   cardPoints,
   trickWinner,
   trickPoints,
+  Card,
+  card,
 } from '../simulator'
-import { Card, card } from '../simulator/card'
-import { Agent } from '.'
-import { FeedBack } from './history'
+import { Agent, FeedBack } from '.'
 
 type ANN = {
   feed(
@@ -41,14 +41,13 @@ function handData(hand: Card[], simplified: boolean): Iterable<number> {
     .reduce(joinIterables, [hand.length])
 }
 
-// TODO: Represent as only a flag for whether the considered action would take
-// TODO: the trick, size of trick, and the points in the trick
 function trickData(
   trick: Trick,
   action: Card,
   simplified: boolean,
 ): Iterable<number> {
   return [
+    // whether this action would take the trick
     trickWinner({ cards: [...trick.cards, action], suit: trick.suit }) ===
     action
       ? 1
@@ -61,7 +60,6 @@ function trickData(
 export function createContextlessAgent(net: ANN): Agent<number[][]> {
   return {
     policy({ trick, simplified }: State, player: Player, actions: Card[]) {
-      // TODO: need to overhaul the state interpretations
       const hand = [...handData(player.hand, simplified)]
       return actions
         .map(action => [...hand, ...trickData(trick, action, simplified)])
