@@ -14,12 +14,12 @@ export function softMax(ary: number[]) {
   return top.map(t => t / (Math.sum(ary.map(k => Math.exp(k))) as number))
 }
 
-//NOT TESTED
-export function crossEntropy(output: number[], yData: Math.Matrix) {
-  let size = yData.size()[0]
-  let smax = softMax(output)
-  //let lLikelihood = -Math.log(smax[[...Array(size).keys()], yData)])
-  //let loss = Math.sum(lLikelihood) / size
+//NOT TESTED on our data
+export function mse(output: Math.Matrix, yData: Math.Matrix) {
+  let n = yData.size()[0]
+  let diff = Math.subtract(output, yData) as Math.Matrix
+  let diffSqr = diff.map(d => Math.pow(d, 2))
+  return Math.sum(diffSqr)
 }
 
 export function transpose(ary: number[][]) {
