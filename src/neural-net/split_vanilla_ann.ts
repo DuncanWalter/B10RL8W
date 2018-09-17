@@ -1,74 +1,89 @@
 import * as Math from 'mathjs'
 import { sigmoid, sigmoidDeriv } from './ann_helper'
 
+type LayerDeclaration = [
+  { nodes: number },
+  ...{ nodes: number; activation: (n: number) => number }[]
+]
+type Transformation = { activation: (n: number) => number; weights: number[][] }
+
 export class Split_Vanilla_ANN {
-  nodes: number[]
-  epochs: number
   xData: Math.Matrix
   yData: Math.Matrix
   lr: number
-  weights: Math.Matrix[]
+  transforms: Transformation[]
 
   constructor(
     xData: Math.Matrix,
     yData: Math.Matrix,
-    epochs: number,
     lr: number,
-    nodes: number[],
+    layers: LayerDeclaration,
   ) {
     this.xData = xData
     this.yData = yData
-    this.epochs = epochs
     this.lr = lr
-    this.nodes = nodes // # of nodes per layer
-    this.weights = this.initWeights()
+    this.transforms = this.initTransforms(layers)
   }
 
-  initWeights() {
+  initTransforms(layers: LayerDeclaration, seed: () => number = Math.random) {
     // random initial weights
-    this.weights = Array(this.nodes.length - 1)
 
-    for (let i = 0; i < this.weights.length; i++) {
-      this.weights[i] = Math.zeros(
-        this.nodes[i],
-        this.nodes[i + 1],
-      ) as Math.Matrix
-      this.weights[i] = this.weights[i].map(x => Math.random())
-      console.log(this.weights[i])
+    const [, ...activationLayers] = layers
+    const bandwidth = layers.map(({ nodes }) => nodes)
+
+    const transforms: Transformation[] = new Array(activationLayers.length)
+
+    for (let i = 0; i < activationLayers.length; i++) {
+      const weights: number[][] = (Math.zeros(
+        bandwidth[i],
+        bandwidth[i + 1],
+      ) as any) as number[][]
+      weights[i] = weights[i].map(x => Math.random())
+      transforms[i] = { weights, activation: activationLayers[i].activation }
     }
 
-    return this.weights
+    return transforms
   }
 
-  forwardprop() {
-    let hidden0, output, err
-    let activation0: Math.Matrix = Math.matrix()
+  feed(input: number[]): { output: number[]; feedTrace: number[][] } {
+    const feedTrace: number[][] = [input]
+    const output = this.transforms.reduce(
+      (output: number[], { weights, activation }: Transformation) => {
+        const activationLayer = (Math.multiply(
+          output,
+          weights,
+        ) as number[]).map(activation)
+        feedTrace.push(activationLayer)
+        return activationLayer
+      },
+      input,
+    )
 
     // TODO: will need to add bias terms in future
 
-    // forward propagtion
-    hidden0 = Math.multiply(this.xData, this.weights[0]) as Math.Matrix
-
-    //QUESTION: how to append row to matrix?
-    activation0 = hidden0.map(sigmoid) as Math.Matrix
-    output = Math.multiply(activation0, this.weights[1])
-
-    return [output, activation0]
+    return {
+      output,
+      feedTrace,
+    }
   }
 
-  backprop(err: Math.Matrix, activation0: Math.Matrix) {
+  backprop({ feedTrace, error }: { feedTrace: number[][]; error: number[] }) {
     // back propagation
-    let dz = Math.multiply(err, this.lr)
+    const delta = Math.multiply(error, this.lr)
+    this.transforms.reduceRight((delta, { weights, prime }, i) => {
+      // TODO: transpose won't work for that operation
+      Math.add(weights, Math.multiply(Math.transpose(feedTrace[i]), delta))
 
-    this.weights[1] = Math.add(
-      this.weights[1],
-      Math.multiply(Math.transpose(activation0), dz),
-    ) as Math.Matrix
+      return Math.dotMultiply(
+        Math.multiply(delta, Math.transpose(weights)),
+        delta.map(prime),
+      )
+    }, delta)
 
-    let dh = Math.dotMultiply(
-      Math.multiply(dz, Math.transpose(this.weights[1])),
-      activation0.map(sigmoidDeriv),
-    )
+    // this.weights[1] = Math.add(
+    //   this.weights[1],
+    //   Math.multiply(Math.transpose(activation0), dz),
+    // ) as Math.Matrix
 
     this.weights[0] = Math.add(
       this.weights[0],
