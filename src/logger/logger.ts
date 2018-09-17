@@ -42,12 +42,12 @@ function sanitizeSessionName(sessionName: string) {
     .join('')
 }
 
-function updateValid(newLog: LogData, update: LogUpdate) {
+function updateValid(newLog: LogData, update: LogUpdate, session: string) {
   return (
     newLog.agentType == update.agentType &&
     newLog.simplified == update.simplified &&
     newLog.suitCount == update.suitCount &&
-    newLog.sessionName == update.sessionName
+    newLog.sessionName == session
   )
 }
 
@@ -63,9 +63,11 @@ async function listLogs() {
       )) as LogData),
     )
 
-  return Promise.all(logPromises).then(results =>
-    JSON.stringify({ logs: results } as GETLogsResponse),
-  )
+  return Promise.all(logPromises)
+    .then(results => JSON.stringify({ logs: results } as GETLogsResponse))
+    .catch(e => {
+      throw e
+    })
 }
 
 async function grabLog(session: string) {
@@ -76,9 +78,9 @@ async function grabLog(session: string) {
   )) as GETLogResponse)
 }
 
-async function updateLog(update: LogUpdate) {
+async function updateLog(session: string, update: LogUpdate) {
   await fs.ensureDir(path.join(pwd, '.logs'))
-  const fileName = sanitizeSessionName(update.sessionName)
+  const fileName = sanitizeSessionName(session)
   const filePath = path.join(pwd, '.logs', `${fileName}.json`)
   const existingFilePaths = await fs.readdir(path.join(pwd, '.logs/'))
   let newLog: LogData
@@ -96,7 +98,7 @@ async function updateLog(update: LogUpdate) {
     } catch {
       throw new Error(`Log file ${fileName}.json is malformed`)
     }
-    if (!updateValid(newLog, update)) {
+    if (!updateValid(newLog, update, session)) {
       throw new Error(`Log file ${fileName}.json did not match request`)
     }
   } else {
@@ -104,7 +106,7 @@ async function updateLog(update: LogUpdate) {
       agentType: update.agentType,
       simplified: update.simplified,
       suitCount: update.suitCount,
-      sessionName: update.sessionName,
+      sessionName: session,
       gamesPlayed: update.additionalGamesPlayed,
       creationTime: currentTime,
       lastUpdate: currentTime,
@@ -114,8 +116,8 @@ async function updateLog(update: LogUpdate) {
   return fs.writeJSON(filePath, newLog).then(() =>
     JSON.stringify({
       message: doUpdate
-        ? `Successfully updated ${update.sessionName}`
-        : `Successfully created ${update.sessionName}`,
+        ? `Successfully updated ${session}`
+        : `Successfully created ${session}`,
     } as POSTLogResponse),
   )
 }
@@ -159,10 +161,7 @@ async function requestLogs(ctx: Koa.Context) {
   }
 }
 
-async function requestLog(ctx: Koa.Context, session?: string) {
-  if (session === undefined) {
-    throw new Error('Please specify a log to request')
-  }
+async function requestLog(ctx: Koa.Context, session: string) {
   try {
     const body = await grabLog(session)
     ctx.response.body = body
@@ -178,17 +177,17 @@ async function requestLog(ctx: Koa.Context, session?: string) {
   }
 }
 
-async function requestLogUpdate(ctx: Koa.Context) {
+async function requestLogUpdate(ctx: Koa.Context, session: string) {
   const request = (await unwrapStream(ctx.req)) as LogUpdate
   try {
-    ctx.response.body = await updateLog(request)
+    ctx.response.body = await updateLog(session, request)
     ctx.response.status = 200
   } catch {
     ctx.response.body = JSON.stringify({
       error:
-        typeof request.sessionName !== 'string'
+        typeof session !== 'string'
           ? 'no file requested for update'
-          : `unable to process update for ${request.sessionName}`,
+          : `unable to process update for ${session}`,
     } as ErrorResponse)
     ctx.response.status = 500
   }
@@ -216,7 +215,11 @@ app.use(
     processRequest(ctx, requestLog, session),
   ),
 )
-app.use(route.post('/log', ctx => processRequest(ctx, requestLogUpdate)))
+app.use(
+  route.post('/log/:session', (ctx, session) =>
+    processRequest(ctx, requestLogUpdate, session),
+  ),
+)
 app.use(
   route.delete('/log/:session', (ctx, session) =>
     processRequest(ctx, requestLogDelete, session),

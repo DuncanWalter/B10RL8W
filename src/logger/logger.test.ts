@@ -18,7 +18,6 @@ const testFileUpdate: LogUpdate = {
   agentType: 'contextless',
   simplified: true,
   suitCount: 4,
-  sessionName: 'test-session',
   additionalGamesPlayed: 1,
   newQualityWeights: [[[9001]]],
 }
@@ -26,7 +25,7 @@ const testFileUpdate: LogUpdate = {
 function testCreateLog(): Promise<void> {
   return new Promise(resolve => {
     const postLogRequest = http.request(
-      requestOptions('/log', 'POST'),
+      requestOptions('/log/test-session', 'POST'),
       async res => {
         expect(res.statusCode).toBe(200)
         resolve()
@@ -60,7 +59,7 @@ function testGetLogs(): Promise<void> {
 function testUpdateLog(): Promise<void> {
   return new Promise(resolve => {
     const updateLogRequest = http.request(
-      requestOptions('/log', 'POST'),
+      requestOptions('/log/test-session', 'POST'),
       async res => {
         expect(res.statusCode).toBe(200)
         resolve()

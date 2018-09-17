@@ -6,15 +6,16 @@ type LogBase = {
     | 'context-learning'
   simplified: boolean
   suitCount: number
-  sessionName: string
 }
 type LogDataAttributes = {
+  sessionName: string
   gamesPlayed: number
   creationTime: number
   lastUpdate: number
   qualityWeights: number[][][]
 }
 type LogHeaderAttributes = {
+  sessionName: string
   gamesPlayed: number
   lastUpdate: number
 }
