@@ -1,6 +1,6 @@
 import * as Stream from 'stream'
 
-export function unwrapStream(stream: Stream) {
+export function unwrapStream<T>(stream: Stream): Promise<T> {
   return new Promise<any>((resolve, reject) => {
     const data: string[] = []
     stream.on('data', chunk => {
@@ -12,10 +12,14 @@ export function unwrapStream(stream: Stream) {
     })
     stream.once('end', () => {
       const allData = data.join()
-      if (allData === '') {
+      if (allData === '' || allData === undefined) {
         resolve(undefined)
       } else {
-        resolve(JSON.parse(allData))
+        try {
+          resolve(JSON.parse(allData))
+        } catch (err) {
+          reject(err)
+        }
       }
     })
     stream.on('error', err => reject(err))
