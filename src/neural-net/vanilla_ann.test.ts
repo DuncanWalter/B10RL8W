@@ -6,6 +6,6 @@ test('The xor function works', () => {
   let xData = Math.matrix([[0, 0], [0, 1], [1, 0], [1, 1]])
   let yData = Math.matrix([[0], [1], [1], [0]])
 
-  let ann = new Vanilla_ANN(xData, yData, 50000, 0.1, [2, 3, 1])
+  let ann = new Vanilla_ANN(xData, yData, 100, 0.1, [2, 3, 1])
   ann.backprop()
 })

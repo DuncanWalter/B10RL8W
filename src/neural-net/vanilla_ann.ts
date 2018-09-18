@@ -34,7 +34,6 @@ export class Vanilla_ANN {
         this.nodes[i + 1],
       ) as Math.Matrix
       this.weights[i] = this.weights[i].map(x => Math.random())
-      console.log(this.weights[i])
     }
 
     return this.weights
@@ -57,7 +56,6 @@ export class Vanilla_ANN {
         for (let i = 0; i < err.size()[0]; i++) {
           errSum += err.get([i, 0])
         }
-        console.log(errSum.toFixed(15))
       }
 
       // back propagation
