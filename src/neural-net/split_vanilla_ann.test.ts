@@ -24,9 +24,6 @@ test('The xor function works', () => {
     for (let i in xData) {
       const { output, feedTrace } = ann.feed(xData[i])
       const error = [yData[i][0] - output[0]]
-      if (epoch % 100 === 0) {
-        console.log(error[0])
-      }
       feedBack.push({ feedTrace, error: error })
     }
     ann.backProp(feedBack)
