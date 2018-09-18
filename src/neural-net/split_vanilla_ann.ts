@@ -1,51 +1,13 @@
-import * as Math from 'mathjs'
-
-function colMulRow(col: number[], row: number[]): number[][] {
-  const width = row.length
-  const height = col.length
-  const output: number[][] = new Array(width)
-  for (let i = 0; i < width; i++) {
-    const outputColumn: number[] = new Array(height)
-    for (let j = 0; j < height; j++) {
-      outputColumn[j] = row[i] * col[j]
-    }
-    output[i] = outputColumn
-  }
-  return output
-}
-
-// function rowMulCol(row: number[], col: number[]): number[][] {
-//   // TODO
-// }
-
-function vector(length: number, seed: () => number): number[] {
-  const output = new Array(length)
-  for (let i = 0; i < length; i++) {
-    output[i] = seed()
-  }
-  return output
-}
-
-function matrix(width: number, height: number, seed: () => number): number[][] {
-  const output = new Array(width)
-  for (let i = 0; i < width; i++) {
-    output[i] = vector(height, seed)
-  }
-  return output
-}
-
-// function rowMulMat(row: number[], mat: number[][]): number[] {
-//   // TODO
-// }
-// function matMulCol(mat: number[][], col: number[]): number[] {
-//   // TODO
-// }
-// function mapRow(row: number[], fun: (n: number) => number): void {
-//   // TODO
-// }
-// function matAddMat(a: number[][], b: number[][]): void {
-//   // TODO
-// }
+// import * as Math from 'mathjs'
+import {
+  matrix,
+  colMulRow,
+  rowMulMat,
+  mapRow,
+  matAddMat,
+  matMulCol,
+  rowZip,
+} from './ann_helper'
 
 export type LayerDeclaration = [
   { nodes: number },
@@ -88,7 +50,7 @@ export class Split_Vanilla_ANN {
     const transforms: Transformation[] = new Array(activationLayers.length)
 
     for (let i = 0; i < activationLayers.length; i++) {
-      const weights: number[][] = matrix(bandwidth[i], bandwidth[i + 1], seed)
+      const weights: number[][] = matrix(bandwidth[i + 1], bandwidth[i], seed)
       transforms[i] = { weights, activation: activationLayers[i].activation }
     }
 
@@ -99,18 +61,14 @@ export class Split_Vanilla_ANN {
     const feedTrace: number[][] = [input]
     const output = this.transforms.reduce(
       (output: number[], { weights, activation: { feed } }: Transformation) => {
-        const activationLayer = (Math.multiply(
-          output,
-          weights,
-        ) as number[]).map(feed)
+        const activationLayer = rowMulMat(output, weights)
+        mapRow(activationLayer, feed, activationLayer)
         feedTrace.push(activationLayer)
         return activationLayer
       },
       input,
     )
-
-    // TODO: will need to add bias terms in future
-
+    // NOTE: could add bias here
     return {
       output,
       feedTrace,
@@ -118,26 +76,23 @@ export class Split_Vanilla_ANN {
   }
 
   backProp({ feedTrace, error }: { feedTrace: number[][]; error: number[] }) {
-    const delta = Math.multiply(error, this.lr) as number[]
+    const delta = mapRow(error, n => n * this.lr)
     this.transforms.reduceRight(
       (
         delta: number[],
         { weights, activation: { prime } }: Transformation,
         i: number,
       ) => {
-        // TODO add to a blank matrix for storing deltas
-
-        const newWeights = Math.add(
-          weights,
-          colMulRow(delta, feedTrace[i]),
-        ) as number[][]
-
-        this.transforms[i].weights = newWeights
-
-        const nextDelta = Math.dotMultiply(
-          Math.multiply(delta, Math.transpose(newWeights)),
-          feedTrace[i].map(prime),
-        ) as number[]
+        // NOTE: add to a blank matrix for storing deltas
+        // NOTE: when batching
+        const changes = colMulRow(feedTrace[i], delta)
+        matAddMat(weights, changes)
+        const nextDelta = rowZip(
+          matMulCol(weights, delta),
+          mapRow(feedTrace[i], prime),
+          (a, b) => a * b,
+          // TODO: clean up memory alocs in the batched backprop
+        )
         return nextDelta
       },
       delta,

@@ -10,12 +10,12 @@ test('The xor function works', () => {
 
   let ann = new Split_Vanilla_ANN(0.01, [
     { nodes: 2 },
-    { nodes: 9, activation: { feed: sigmoid, prime: sigmoidDeriv } },
+    // { nodes: 9, activation: { feed: sigmoid, prime: sigmoidDeriv } },
     { nodes: 6, activation: { feed: sigmoid, prime: sigmoidDeriv } },
     { nodes: 3, activation: { feed: sigmoid, prime: sigmoidDeriv } },
     { nodes: 1, activation: { feed: i => i, prime: i => 1 } },
   ])
-  for (let epoch of range(100)) {
+  for (let epoch of range(3000)) {
     for (let i in xData) {
       const { output, feedTrace } = ann.feed(xData[i])
       const error = [yData[i][0] - output[0]]
