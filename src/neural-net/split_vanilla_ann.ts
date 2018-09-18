@@ -1,44 +1,94 @@
 import * as Math from 'mathjs'
-import { sigmoid, sigmoidDeriv } from './ann_helper'
 
-type LayerDeclaration = [
+function colMulRow(col: number[], row: number[]): number[][] {
+  const width = row.length
+  const height = col.length
+  const output: number[][] = new Array(width)
+  for (let i = 0; i < width; i++) {
+    const outputColumn: number[] = new Array(height)
+    for (let j = 0; j < height; j++) {
+      outputColumn[j] = row[i] * col[j]
+    }
+    output[i] = outputColumn
+  }
+  return output
+}
+
+// function rowMulCol(row: number[], col: number[]): number[][] {
+//   // TODO
+// }
+
+function vector(length: number, seed: () => number): number[] {
+  const output = new Array(length)
+  for (let i = 0; i < length; i++) {
+    output[i] = seed()
+  }
+  return output
+}
+
+function matrix(width: number, height: number, seed: () => number): number[][] {
+  const output = new Array(width)
+  for (let i = 0; i < width; i++) {
+    output[i] = vector(height, seed)
+  }
+  return output
+}
+
+// function rowMulMat(row: number[], mat: number[][]): number[] {
+//   // TODO
+// }
+// function matMulCol(mat: number[][], col: number[]): number[] {
+//   // TODO
+// }
+// function mapRow(row: number[], fun: (n: number) => number): void {
+//   // TODO
+// }
+// function matAddMat(a: number[][], b: number[][]): void {
+//   // TODO
+// }
+
+export type LayerDeclaration = [
   { nodes: number },
-  ...{ nodes: number; activation: (n: number) => number }[]
+  ...{ nodes: number; activation: Activation }[]
 ]
-type Transformation = { activation: (n: number) => number; weights: number[][] }
+
+export type Activation = {
+  feed: (n: number) => number
+  prime: (n: number) => number
+}
+
+export type Transformation = { activation: Activation; weights: number[][] }
+
+export function composeActivations(a: Activation, b: Activation): Activation {
+  const { feed: aFeed, prime: aPrime } = a
+  const { feed: bFeed, prime: bPrime } = b
+  return {
+    feed(n: number) {
+      return aFeed(bFeed(n))
+    },
+    prime(n: number) {
+      return bPrime(aPrime(n))
+    },
+  }
+}
 
 export class Split_Vanilla_ANN {
-  xData: Math.Matrix
-  yData: Math.Matrix
   lr: number
   transforms: Transformation[]
 
-  constructor(
-    xData: Math.Matrix,
-    yData: Math.Matrix,
-    lr: number,
-    layers: LayerDeclaration,
-  ) {
-    this.xData = xData
-    this.yData = yData
+  constructor(lr: number, layers: LayerDeclaration) {
     this.lr = lr
-    this.transforms = this.initTransforms(layers)
+    this.transforms = this.initTransforms(layers, () => Math.random() * 2 - 1)
   }
 
   initTransforms(layers: LayerDeclaration, seed: () => number = Math.random) {
-    // random initial weights
-
     const [, ...activationLayers] = layers
     const bandwidth = layers.map(({ nodes }) => nodes)
 
     const transforms: Transformation[] = new Array(activationLayers.length)
 
     for (let i = 0; i < activationLayers.length; i++) {
-      const weights: number[][] = (Math.zeros(
-        bandwidth[i],
-        bandwidth[i + 1],
-      ) as any) as number[][]
-      weights[i] = weights[i].map(x => Math.random())
+      const weights: number[][] = matrix(bandwidth[i], bandwidth[i + 1], seed)
       transforms[i] = { weights, activation: activationLayers[i].activation }
     }
 
@@ -48,11 +98,11 @@ export class Split_Vanilla_ANN {
   feed(input: number[]): { output: number[]; feedTrace: number[][] } {
     const feedTrace: number[][] = [input]
     const output = this.transforms.reduce(
-      (output: number[], { weights, activation }: Transformation) => {
+      (output: number[], { weights, activation: { feed } }: Transformation) => {
         const activationLayer = (Math.multiply(
           output,
           weights,
-        ) as number[]).map(activation)
+        ) as number[]).map(feed)
         feedTrace.push(activationLayer)
         return activationLayer
       },
@@ -67,32 +117,30 @@ export class Split_Vanilla_ANN {
     }
   }
 
-  backprop({ feedTrace, error }: { feedTrace: number[][]; error: number[] }) {
-    // back propagation
-    const delta = Math.multiply(error, this.lr)
-    this.transforms.reduceRight((delta, { weights, prime }, i) => {
-      // TODO: transpose won't work for that operation
-      Math.add(weights, Math.multiply(Math.transpose(feedTrace[i]), delta))
+  backProp({ feedTrace, error }: { feedTrace: number[][]; error: number[] }) {
+    const delta = Math.multiply(error, this.lr) as number[]
+    this.transforms.reduceRight(
+      (
+        delta: number[],
+        { weights, activation: { prime } }: Transformation,
+        i: number,
+      ) => {
+        // TODO add to a blank matrix for storing deltas
 
-      return Math.dotMultiply(
-        Math.multiply(delta, Math.transpose(weights)),
-        delta.map(prime),
-      )
-    }, delta)
+        const newWeights = Math.add(
+          weights,
+          colMulRow(delta, feedTrace[i]),
+        ) as number[][]
 
-    // this.weights[1] = Math.add(
-    //   this.weights[1],
-    //   Math.multiply(Math.transpose(activation0), dz),
-    // ) as Math.Matrix
+        this.transforms[i].weights = newWeights
 
-    this.weights[0] = Math.add(
-      this.weights[0],
-      Math.multiply(Math.transpose(this.xData), dh),
-    ) as Math.Matrix
-  }
-
-  error(output: number[]) {
-    // TODO: will need to make more complex error calculation
-    return Math.subtract(this.yData, output)
+        const nextDelta = Math.dotMultiply(
+          Math.multiply(delta, Math.transpose(newWeights)),
+          feedTrace[i].map(prime),
+        ) as number[]
+        return nextDelta
+      },
+      delta,
+    )
   }
 }
