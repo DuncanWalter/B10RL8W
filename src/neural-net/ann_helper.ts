@@ -1,11 +1,39 @@
 import * as Math from 'mathjs'
 
 export function sigmoid(n: number) {
-  return 1 / (1 + Math.exp(-n))
+  return 2 / (1 + Math.exp(-n)) - 1
 }
 
 export function sigmoidDeriv(n: number) {
-  return sigmoid(n) * (1 - sigmoid(n))
+  return 2 * sigmoid(n) * (1 - sigmoid(n))
+}
+
+export const reluActivation = {
+  feed(n: number) {
+    return n > 0 ? n : 0
+  },
+  prime(n: number) {
+    return n > 0 ? 1 : 0
+  },
+}
+
+export const signActivation = {
+  feed(n: number) {
+    switch (true) {
+      case n > 1: {
+        return 1
+      }
+      case n < -1: {
+        return -1
+      }
+      default: {
+        return n
+      }
+    }
+  },
+  prime(n: number) {
+    return n > -1 && n < 1 ? 1 : 0
+  },
 }
 
 //NOT TESTED

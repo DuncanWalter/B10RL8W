@@ -75,27 +75,42 @@ export class Split_Vanilla_ANN {
     }
   }
 
-  backProp({ feedTrace, error }: { feedTrace: number[][]; error: number[] }) {
-    const delta = mapRow(error, n => n * this.lr)
-    this.transforms.reduceRight(
-      (
-        delta: number[],
-        { weights, activation: { prime } }: Transformation,
-        i: number,
-      ) => {
-        // NOTE: add to a blank matrix for storing deltas
-        // NOTE: when batching
-        const changes = colMulRow(feedTrace[i], delta)
-        matAddMat(weights, changes)
-        const nextDelta = rowZip(
-          matMulCol(weights, delta),
-          mapRow(feedTrace[i], prime),
-          (a, b) => a * b,
-          // TODO: clean up memory alocs in the batched backprop
-        )
-        return nextDelta
-      },
-      delta,
-    )
+  backProp(feedBack: { feedTrace: number[][]; error: number[] }[]) {
+    // TODO: create deltas matrix and any reusable buffers
+
+    const updates = this.transforms.map(({ weights }) => {
+      return matrix(weights.length, weights[0].length, () => 0)
+    })
+
+    for (let { feedTrace, error } of feedBack) {
+      const delta = mapRow(error, n => (n * this.lr) / feedBack.length)
+      this.transforms.reduceRight(
+        (
+          delta: number[],
+          { weights, activation: { prime } }: Transformation,
+          i: number,
+        ) => {
+          // NOTE: add to a blank matrix for storing deltas
+          // NOTE: when batching
+          const changes = colMulRow(feedTrace[i], delta)
+          matAddMat(updates[i], changes)
+          const nextDelta = rowZip(
+            matMulCol(weights, delta),
+            mapRow(feedTrace[i], prime),
+            (a, b) => a * b,
+            // TODO: clean up memory alocs in the batched backprop
+          )
+          return nextDelta
+        },
+        delta,
+      )
+    }
+
+    this.transforms.forEach(({ weights }, i) => {
+      matAddMat(weights, updates[i])
+    })
+  }
+  getWeights(): number[][][] {
+    return this.transforms.map(({ weights }) => weights)
   }
 }
