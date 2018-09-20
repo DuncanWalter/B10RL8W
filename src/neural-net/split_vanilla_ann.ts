@@ -14,25 +14,74 @@ export type LayerDeclaration = [
   ...{ nodes: number; activation: Activation }[]
 ]
 
-export type Activation = {
-  feed: (n: number) => number
-  prime: (n: number) => number
+export type Activation<
+  FeedMeta = undefined,
+  PrimeMeta = undefined
+> = (FeedMeta extends undefined
+  ? {
+      feed: (n: number, meta: FeedMeta, i: number) => number
+      metaFeed?: undefined
+    }
+  : {
+      metaFeed: (batch: number[]) => FeedMeta
+      feed: (n: number, meta: FeedMeta, i: number) => number
+    }) &
+  (PrimeMeta extends undefined
+    ? {
+        prime: (dn: number, n: number, meta: PrimeMeta, i: number) => number
+        metaPrime?: undefined
+      }
+    : {
+        metaPrime: (dBatch: number[], batch: number[]) => PrimeMeta
+        prime: (dn: number, n: number, meta: PrimeMeta, i: number) => number
+      })
+
+export type Transformation<F = any, P = any> = {
+  activation: Activation<F, P>
+  weights: number[][]
 }
 
-export type Transformation = { activation: Activation; weights: number[][] }
-
-export function composeActivations(a: Activation, b: Activation): Activation {
-  const { feed: aFeed, prime: aPrime } = a
-  const { feed: bFeed, prime: bPrime } = b
+export function composeActivations<AF, AP, BF, BP>(
+  a: Activation<AF, AP>,
+  b: Activation<BF, BP>,
+): Activation<{ left: AF; right: BF }, { left: AP; right: BP }> {
   return {
-    feed(n: number) {
-      return aFeed(bFeed(n))
+    metaFeed(batch: number[]) {
+      return {
+        right:
+          b.metaFeed === undefined
+            ? ((undefined as any) as BF)
+            : b.metaFeed(batch),
+        left:
+          a.metaFeed === undefined
+            ? ((undefined as any) as AF)
+            : a.metaFeed(batch),
+      }
     },
-    prime(n: number) {
-      return bPrime(aPrime(n))
+    feed(n: number, meta, i) {
+      return a.feed(b.feed(n, meta.right, i), meta.left, i)
+    },
+    metaPrime(dBatch: number[], batch: number[]) {
+      return {
+        right:
+          b.metaPrime === undefined
+            ? ((undefined as any) as BP)
+            : b.metaPrime(dBatch, batch),
+        left:
+          a.metaPrime === undefined
+            ? ((undefined as any) as AP)
+            : a.metaPrime(dBatch, batch),
+      }
+    },
+    prime(dn: number, n: number, meta, i) {
+      return b.prime(a.prime(dn, n, meta.left, i), n, meta.right, i)
     },
   }
 }
+
+export function mixActivations<As extends Activation<any, any>[]>(
+  ...activations: As
+) {}
 
 export class Split_Vanilla_ANN {
   lr: number
@@ -59,12 +108,20 @@ export class Split_Vanilla_ANN {
 
   feed(input: number[]): { output: number[]; feedTrace: number[][] } {
     const feedTrace: number[][] = [input]
-    const output = this.transforms.reduce(
-      (output: number[], { weights, activation: { feed } }: Transformation) => {
-        const activationLayer = rowMulMat(output, weights)
-        mapRow(activationLayer, feed, activationLayer)
-        feedTrace.push(activationLayer)
-        return activationLayer
+    const output = this.transforms.reduce<number[]>(
+      <F>(
+        output: number[],
+        { weights, activation: { metaFeed, feed } }: Transformation<F, any>,
+      ) => {
+        const rawBatch = rowMulMat(output, weights)
+        const batchMeta: F = metaFeed
+          ? metaFeed(rawBatch)
+          : ((undefined as any) as F)
+        const activatedBatch = mapRow(rawBatch, (x, i) => feed(x, batchMeta, i))
+
+        feedTrace.push({ rawBatch, activatedBatch, batchMeta })
+
+        return activatedBatch
       },
       input,
     )
@@ -82,7 +139,10 @@ export class Split_Vanilla_ANN {
       return matrix(weights.length, weights[0].length, () => 0)
     })
 
-    for (let { feedTrace, error } of feedBack) {
+    for (let {
+      feedTrace: { rawBatch, activatedBatch, batchMeta },
+      error,
+    } of feedBack) {
       const delta = mapRow(error, n => (n * this.lr) / feedBack.length)
       this.transforms.reduceRight(
         (
@@ -92,11 +152,11 @@ export class Split_Vanilla_ANN {
         ) => {
           // NOTE: add to a blank matrix for storing deltas
           // NOTE: when batching
-          const changes = colMulRow(feedTrace[i], delta)
+          const changes = colMulRow(activatedBatch[i], delta)
           matAddMat(updates[i], changes)
           const nextDelta = rowZip(
             matMulCol(weights, delta),
-            mapRow(feedTrace[i], prime),
+            mapRow(feedTrace[i], (x, i) => prime(delta[i], x, meta, i)),
             (a, b) => a * b,
             // TODO: clean up memory alocs in the batched backprop
           )

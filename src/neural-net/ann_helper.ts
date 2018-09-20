@@ -1,23 +1,96 @@
-import * as Math from 'mathjs'
+import { Activation } from './split_vanilla_ann'
 
 export function sigmoid(n: number) {
   return 2 / (1 + Math.exp(-n)) - 1
 }
 
-export function sigmoidDeriv(n: number) {
-  return 2 * sigmoid(n) * (1 - sigmoid(n))
+export function sigmoidDeriv(dn: number, n: number) {
+  const sig = sigmoid(n)
+  return 2 * sig * (1 - sig)
 }
 
-export const reluActivation = {
+function mean(vec: number[]) {
+  let sum = 0
+  for (let i = 0; i < vec.length; i++) {
+    sum += vec[i]
+  }
+  return sum / vec.length
+}
+
+function variance(vec: number[], _mean?: number) {
+  const mu = _mean === undefined ? mean(vec) : _mean
+  let sum = 0
+  for (let i = 0; i < vec.length; i++) {
+    const dif = vec[i] - mu
+    sum += dif * dif
+  }
+  return sum / vec.length
+}
+
+function sum(i: number, v: (i: number) => number){
+  let sum = 0
+  for(let j = 0; j < i; j++){
+    sum += v(i)
+  }
+  return sum
+}
+
+const epsilon = 1 / 10 ** 12
+const batchActivation = {
+  feedMeta(batch: number[]) {
+    const mu = mean(batch)
+    return {
+      shift: mu,
+      scale: Math.sqrt(variance(batch, mu) + epsilon),
+    }
+  },
+  feed(n: number, { shift, scale }) {
+    return (n - shift) / scale
+  },
+  primeMeta(dBatch: number[], batch: number[]){
+    const len = dBatch.length
+    const mu = mean(batch)
+    const sigma2 = variance(batch, mu)
+    const sigma = Math.sqrt(sigma2 + epsilon)
+
+    // 
+    const dSigma2 = sum(len, i => dBatch[i] * (batch[i] - mu) - 0.5/sigma/sigma/sigma)
+    const dMu = sum(len, i => -dBatch[i] / sigma) + dSigma2 * sum(len, i => batch[i] - mu) * -2/ len
+    
+    return {
+      len,
+      mu, 
+      sigma2,
+      sigma,
+      dSigma2,
+      dMu,
+    }
+    
+    
+    
+    
+    
+  },
+  prime(n: number, { }){
+    n / (Math.sqrt(sigma2 + epsilon)) + dSigma2 * 2(batch[i] - mu)/batch.length + dMu/batch.length
+
+
+
+
+    dOut[i] := dBatch[i] / sigma + dSigma2 * 2(batch[i] - mu) / batch.length + dMu / batch.length
+  }
+}
+
+export const reluActivation: Activation = {
   feed(n: number) {
     return n > 0 ? n : 0
   },
-  prime(n: number) {
+  prime(dn: number, n: number) {
     return n > 0 ? 1 : 0
   },
 }
 
-export const signActivation = {
+export const signActivation: Activation = {
   feed(n: number) {
     switch (true) {
       case n > 1: {
@@ -30,8 +103,8 @@ export const signActivation = {
         return n
       }
     }
-  },
-  prime(n: number) {
+  }, 
+  prime(dn, n: number) {
     return n > -1 && n < 1 ? 1 : 0
   },
 }
@@ -128,13 +201,13 @@ export function matMulCol(mat: number[][], col: number[]): number[] {
 
 export function mapRow(
   row: number[],
-  fun: (n: number) => number,
+  fun: (n: number, i: number) => number,
   out?: number[],
 ): number[] {
   const output = out !== undefined ? out : new Array(row.length)
   const length = row.length
   for (let i = 0; i < length; i++) {
-    output[i] = fun(row[i])
+    output[i] = fun(row[i], i)
   }
   return output
 }
@@ -163,3 +236,14 @@ export function rowZip(
   }
   return output
 }
+
+
+
+
+
+
+
+
+
+
+
