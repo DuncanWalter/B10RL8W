@@ -60,11 +60,17 @@ export class Split_Vanilla_ANN {
   feed(input: number[]): { output: number[]; feedTrace: number[][] } {
     const feedTrace: number[][] = [input]
     const output = this.transforms.reduce(
-      (output: number[], { weights, activation: { feed } }: Transformation) => {
-        const activationLayer = rowMulMat(output, weights)
-        mapRow(activationLayer, feed, activationLayer)
-        feedTrace.push(activationLayer)
-        return activationLayer
+      (
+        output: number[],
+        { weights, activation: { feed } }: Transformation,
+        i,
+      ) => {
+        const rawBatch = rowMulMat(output, weights)
+        const activatedBatch = mapRow(rawBatch, feed)
+        feedTrace.push(activatedBatch)
+        feedTrace[i].rawBatch = rawBatch
+
+        return activatedBatch
       },
       input,
     )
@@ -83,7 +89,10 @@ export class Split_Vanilla_ANN {
     })
 
     for (let { feedTrace, error } of feedBack) {
-      const delta = mapRow(error, n => (n * this.lr) / feedBack.length)
+      const delta = mapRow(
+        error,
+        n => (n * this.lr) / feedBack.length / error.length,
+      )
       this.transforms.reduceRight(
         (
           delta: number[],
@@ -94,11 +103,13 @@ export class Split_Vanilla_ANN {
           // NOTE: when batching
           const changes = colMulRow(feedTrace[i], delta)
           matAddMat(updates[i], changes)
-          const nextDelta = rowZip(
-            matMulCol(weights, delta),
-            mapRow(feedTrace[i], prime),
-            (a, b) => a * b,
-            // TODO: clean up memory alocs in the batched backprop
+          const nextDelta = matMulCol(
+            weights,
+            rowZip(
+              mapRow(feedTrace[i].rawBatch, prime),
+              delta,
+              (a, b) => a * b,
+            ),
           )
           return nextDelta
         },
