@@ -6,7 +6,7 @@ function seededRandom(seed: number) {
   return Math.random
 }
 
-export function createRandomAgent(seed: number): Agent<number> {
+export function createRandomAgent(seed: number): Agent<number, null> {
   const random = seededRandom(seed)
   return {
     policy(state: State, player: Player, actions: Card[]) {
@@ -18,6 +18,9 @@ export function createRandomAgent(seed: number): Agent<number> {
     },
     train(feedBack: any) {
       return
+    },
+    summary() {
+      return null
     },
   }
 }

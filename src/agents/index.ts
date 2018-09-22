@@ -1,9 +1,10 @@
 import { Policy } from '../simulator/player'
 import { FeedBack } from './history'
 
-export type Agent<F = any> = {
+export type Agent<F = any, S = any> = {
   policy: Policy<F>
   train: (feedBack: FeedBack<F>[]) => void
+  summary: () => S
 }
 
 export { FeedBack, interpretHistory } from './history'
