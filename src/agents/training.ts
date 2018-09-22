@@ -1,18 +1,13 @@
 import { Agent, interpretHistory, FeedBack } from '.'
 import { ANNSummary } from './contextless'
 import { playGame } from '../simulator'
-import { range } from '../utils/range'
 
-export function trainAgent<F, ANNSummary>(
+export function trainAgent<F>(
   { policy, train, summary }: Agent<F, ANNSummary>,
   games: number,
   simplified: boolean,
+  log: (additionalGamesPlayed: number, agentSummary: ANNSummary) => void,
   logRateMilliseconds: number = 10000,
-  log: (
-    simplified: boolean,
-    additionalGamesPlayed: number,
-    agentSummary: ANNSummary,
-  ) => void,
 ) {
   let lastGameRecorded = 0
   let timerStart = Date.now()
@@ -35,7 +30,7 @@ export function trainAgent<F, ANNSummary>(
         const additionalGamesPlayed = i - lastGameRecorded
         const agentSummary = summary()
         // TODO Implement log function in dashboard
-        log(simplified, additionalGamesPlayed, agentSummary)
+        log(additionalGamesPlayed, agentSummary)
         lastGameRecorded = i
         timerStart = timerEnd
       }
