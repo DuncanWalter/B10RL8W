@@ -18,7 +18,12 @@ type ANN = {
     output: number[]
   }
   backProp(feedBack: { feedTrace: number[][]; error: number[] }[]): void
-  getWeights(): number[][]
+  getWeights(): number[][][]
+}
+
+export type ANNSummary = {
+  agentType: string
+  qualityWeights: number[][][]
 }
 
 function* joinIterables(
@@ -60,7 +65,7 @@ function trickData(
 
 export function createContextlessAgent(
   net: ANN,
-): Agent<number[][], { agentType: 'contextless'; qualityWeights: number[][] }> {
+): Agent<number[][], ANNSummary> {
   return {
     policy({ trick, simplified }: State, player: Player, actions: Card[]) {
       const hand = [...handData(player.hand, simplified)]
