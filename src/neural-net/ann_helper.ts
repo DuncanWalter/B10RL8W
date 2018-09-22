@@ -157,7 +157,7 @@ export function colMulRow(col: number[], row: number[]): number[][] {
 export function vector(
   length: number,
   seed: (i: number, j: number) => number,
-  i: number,
+  i: number = 0,
 ): number[] {
   const output = new Array(length)
   for (let j = 0; j < length; j++) {

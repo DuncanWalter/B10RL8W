@@ -2,6 +2,7 @@ import {
   Split_Vanilla_ANN,
   denseTransform,
   reluTransform,
+  biasTransform,
 } from './split_vanilla_ann'
 import { batchTransform } from './ann_helper'
 import { range } from '../utils/range'
@@ -14,9 +15,11 @@ test('The xor function works', () => {
 
   let ann = new Split_Vanilla_ANN(0.05, [
     denseTransform(2, 7),
+    biasTransform(7),
     batchTransform(),
     reluTransform(),
     denseTransform(7, 3),
+    biasTransform(3),
     batchTransform(),
     reluTransform(),
     denseTransform(3, 1),

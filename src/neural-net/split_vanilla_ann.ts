@@ -5,6 +5,8 @@ import {
   mapRow,
   matAddMat,
   matMulCol,
+  vector,
+  rowZip,
 } from './ann_helper'
 
 export type Transformation<C> = {
@@ -39,13 +41,48 @@ export function denseTransform(
       }
     },
     storeChanges(changes) {
-      // console.log('changes', changes)
       matAddMat(deltas, changes)
     },
     applyChanges() {
       matAddMat(weights, deltas)
-      // console.log('new weights', weights)
       deltas = matrix(outputSize, inputSize, () => 0)
+    },
+    getRepresentation() {
+      return weights
+    },
+  }
+}
+
+function mul(a: number, b: number) {
+  return a * b
+}
+function add(a: number, b: number) {
+  return a + b
+}
+
+export function biasTransform(
+  inputSize: number,
+  seed: (i: number) => number = i =>
+    i % 2 === 0 ? Math.random() : -Math.random(),
+): Transformation<number[]> {
+  const weights = vector(inputSize, seed)
+  let deltas = vector(inputSize, () => 0)
+  return {
+    feed(batch) {
+      return rowZip(batch, weights, add)
+    },
+    backProp(batch, error) {
+      return {
+        changes: rowZip(batch, error, mul),
+        output: error,
+      }
+    },
+    storeChanges(changes) {
+      rowZip(deltas, changes, add, deltas)
+    },
+    applyChanges() {
+      rowZip(weights, deltas, add, weights)
+      deltas = vector(inputSize, () => 0)
     },
     getRepresentation() {
       return weights
@@ -114,8 +151,6 @@ export class Split_Vanilla_ANN<Ts extends Transformation<any>[]> {
           { backProp, storeChanges }: Transformation<C>,
           i: number,
         ) => {
-          // console.log('delta', error)
-
           const { changes, output } = backProp(feedTrace[i].batch, error)
           storeChanges(changes)
           return output
