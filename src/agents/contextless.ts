@@ -72,24 +72,27 @@ const trickSummary: GameSummary<4> = {
 
 const actionSummary: GameSummary<5> = {
   size: 5,
-  *summary(state: State, player: Player, action: Card) {
-    for (let key of Object.keys(suits) as (keyof typeof suits)[]) {
-      yield action.suit === suits[key] ? 1 : 0
-    }
-    yield action.rank
+  summary(state: State, player: Player, action: Card) {
+    return [
+      ...(Object.keys(suits) as (keyof typeof suits)[]).map(suit => {
+        return action.suit === suits[suit] ? 1 : 0
+      }),
+      action.rank,
+    ]
   },
 }
 
 export function joinSummaries(
   ...summaries: GameSummary<number>[]
 ): GameSummary<number> {
-  const size = summaries.reduce((totalSize, { size }) => size + totalSize, 0)
-  function* summary(state: State, player: Player, action: Card) {
-    for (let { summary } of summaries) {
-      yield* summary(state, player, action)
-    }
+  return {
+    size: summaries.reduce((totalSize, { size }) => size + totalSize, 0),
+    *summary(state: State, player: Player, action: Card) {
+      for (let { summary } of summaries) {
+        yield* summary(state, player, action)
+      }
+    },
   }
-  return { size, summary }
 }
 
 export const contextlessSummary = joinSummaries(
