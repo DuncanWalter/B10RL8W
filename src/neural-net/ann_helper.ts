@@ -42,54 +42,63 @@ export function batchTransform(): Transformation<{
 }> {
   let scale = 1
   let shift = 0
-
+  let dScale = 0
+  let dShift = 0
   return {
     feed(batch: number[]) {
       const mu = mean(batch)
       const sigma = Math.sqrt(variance(batch, mu) + epsilon)
-      return mapRow(batch, x => (x - mu) / sigma)
+      return mapRow(batch, x => (scale * (x - mu)) / sigma + shift)
     },
     backProp(batch: number[], error: number[]) {
       const len = error.length
       if (len === 0) {
-        throw new Error('batch norm will be unhelpful on a layer of width 0')
+        return { output: [], changes: { scale: 0, shift: 0 } }
       }
       const mu = mean(batch)
       const sigma = Math.sqrt(variance(batch, mu) + epsilon)
-      if (sigma !== sigma) {
-        console.log('sigma')
-      }
+
       const dSigma2 = sum(
         len,
-        i => error[i] * (batch[i] - mu) * (-0.5 / sigma / sigma / sigma),
+        i =>
+          scale * error[i] * (batch[i] - mu) * (-0.5 / sigma / sigma / sigma),
       )
-      if (dSigma2 !== dSigma2) {
-        console.log('dSigma2')
-      }
-      // console.log('dSigma2', dSigma2)
+
       const dMu =
-        sum(len, i => -error[i] / sigma) +
+        -sum(len, i => (scale * error[i]) / sigma) +
         (dSigma2 * sum(len, i => batch[i] - mu) * -2) / len
 
-      // console.log('dMu', dMu)
       const output = mapRow(batch, (x, i) => {
         return (
-          error[i] / sigma + (dSigma2 * 2 * (batch[i] - mu)) / len + dMu / len
+          (scale * error[i]) / sigma +
+          (dSigma2 * 2 * (batch[i] - mu)) / len +
+          dMu / len
         )
       })
-      if (output[0] !== output[0]) {
-        console.log(mu, sigma, dSigma2, dMu, batch, error)
-        throw new Error('went to NaN')
-      }
       // TODO make it learn
+      const dScale = sum(len, i => (error[i] * (batch[i] - mu)) / sigma) / len
+      const dShift = sum(len, i => error[i]) / len
       return {
         output,
-        changes: { scale: 0, shift: 0 },
+        changes: { scale: dScale, shift: dShift },
       }
     },
-    applyChanges() {},
-    storeChanges() {},
-    getRepresentation() {},
+    applyChanges() {
+      scale += dScale
+      shift += dShift
+      dScale = 0
+      dShift = 0
+    },
+    storeChanges({ scale, shift }) {
+      dScale += scale
+      dShift += shift
+    },
+    getRepresentation() {
+      return {
+        scale,
+        shift,
+      }
+    },
   }
 }
 
