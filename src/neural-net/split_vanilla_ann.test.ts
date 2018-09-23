@@ -10,7 +10,7 @@ test('The xor function works', () => {
   // xor function
   // TODO: need test data for our problem
   let xData = [[0, 0], [0, 1], [1, 0], [1, 1]]
-  let yData = [[0], [1], [1], [-1]]
+  let yData = [[0], [1], [1], [0]]
 
   let ann = new Split_Vanilla_ANN(0.08, [
     denseTransform(2, 11),
@@ -24,7 +24,7 @@ test('The xor function works', () => {
       { transform: leakyReluTransform(), inCount: 2, outCount: 2 },
       { transform: sigmoidTransform(), inCount: 3, outCount: 3 },
     ),
-    denseTransform(3, 1),
+    denseTransform(5, 1),
   ])
   for (let epoch = 0; epoch < 3000; epoch++) {
     let feedBack = []

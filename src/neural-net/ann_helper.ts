@@ -1,4 +1,5 @@
 import { Transformation } from './split_vanilla_ann'
+import '../utils/arrayScan'
 
 export function sigmoid(n: number) {
   return 2 / (1 + Math.exp(-n)) - 1
@@ -125,48 +126,48 @@ export function splitTransform(
     inCount: number
     outCount: number
   }[]
-): Transformation<Transformation<any>[]> {
-  const allChanges: any[] = []
-
+): Transformation<unknown[]> {
   return {
     feed(batch: number[]) {
-      return transforms.reduce<{ result: number[]; allocated: number }>(
-        ({ result, allocated }, trans) => {
-          const newAllocated = allocated + trans.inCount
+      const outputs = transforms.scan(
+        ({ allocated }, { transform, inCount }) => {
           return {
-            result: result.concat(
-              trans.transform.feed(batch.slice(allocated, newAllocated)),
-            ),
-            allocated: newAllocated,
+            result: transform.feed(batch.slice(allocated, allocated + inCount)),
+            allocated: allocated + inCount,
           }
         },
-        { result: [], allocated: 0 },
-      ).result
+        { allocated: 0 },
+      )
+      const output = Array.prototype.concat.apply(
+        [],
+        mapRow(outputs, acc => acc.result, outputs),
+      )
+      return output
     },
     backProp(batch: number[], error: number[]) {
+      const outputs = transforms.scan(
+        ({ allocatedIn, allocatedOut }, { inCount, outCount, transform }) => {
+          const { output, changes } = transform.backProp(
+            batch.slice(allocatedIn, allocatedIn + inCount),
+            error.slice(allocatedOut, allocatedOut + outCount),
+          )
+          return {
+            result: output,
+            changes,
+            allocatedIn: allocatedIn + inCount,
+            allocatedOut: allocatedOut + outCount,
+          }
+        },
+        { allocatedIn: 0, allocatedOut: 0 },
+      )
+      const changes = mapRow(outputs, acc => acc.changes)
+      const output = Array.prototype.concat.apply(
+        [],
+        mapRow(outputs, acc => acc.result, outputs),
+      )
       return {
-        output: transforms.reduce<{
-          result: number[]
-          allocatedIn: number
-          allocatedOut: number
-        }>(
-          ({ result, allocatedIn, allocatedOut }, trans, i) => {
-            const newAllocatedIn = allocatedIn + trans.inCount
-            const newAllocatedOut = allocatedOut + trans.outCount
-            const { output, changes } = trans.transform.backProp(
-              batch.slice(allocatedIn, newAllocatedIn),
-              error.slice(allocatedOut, newAllocatedOut),
-            )
-            allChanges[i] = changes
-            return {
-              result: result.concat(output),
-              allocatedIn: newAllocatedIn,
-              allocatedOut: newAllocatedOut,
-            }
-          },
-          { result: [], allocatedIn: 0, allocatedOut: 0 },
-        ).result,
-        changes: allChanges,
+        changes,
+        output,
       }
     },
     applyChanges() {
@@ -303,11 +304,11 @@ export function matMulCol(mat: number[][], col: number[]): number[] {
   return output
 }
 
-export function mapRow(
-  row: number[],
-  fun: (n: number, i: number) => number,
-  out?: number[],
-): number[] {
+export function mapRow<I, O>(
+  row: I[],
+  fun: (n: I, i: number) => O,
+  out?: any[],
+): O[] {
   const output = out !== undefined ? out : new Array(row.length)
   const length = row.length
   for (let i = 0; i < length; i++) {
