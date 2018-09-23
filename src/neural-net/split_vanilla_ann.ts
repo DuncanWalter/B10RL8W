@@ -1,4 +1,3 @@
-// import * as Math from 'mathjs'
 import {
   matrix,
   colMulRow,
@@ -6,111 +5,166 @@ import {
   mapRow,
   matAddMat,
   matMulCol,
+  vector,
   rowZip,
 } from './ann_helper'
 
-export type LayerDeclaration = [
-  { nodes: number },
-  ...{ nodes: number; activation: Activation }[]
-]
-
-export type Activation = {
-  feed: (n: number) => number
-  prime: (n: number) => number
+export type Transformation<C> = {
+  getRepresentation(): unknown
+  storeChanges(changes: C): void
+  applyChanges(): void
+  feed(batch: number[]): number[]
+  backProp(batch: number[], error: number[]): { output: number[]; changes: C }
 }
 
-export type Transformation = { activation: Activation; weights: number[][] }
+type Trace = {
+  batch: number[]
+  output: number[]
+}
 
-export function composeActivations(a: Activation, b: Activation): Activation {
-  const { feed: aFeed, prime: aPrime } = a
-  const { feed: bFeed, prime: bPrime } = b
+export function denseTransform(
+  inputSize: number,
+  outputSize: number,
+  seed: (i: number, j: number) => number = (i, j) =>
+    (i + j) % 2 === 0 ? Math.random() : -Math.random(),
+): Transformation<number[][]> {
+  const weights = matrix(outputSize, inputSize, seed)
+  let deltas = matrix(outputSize, inputSize, () => 0)
   return {
-    feed(n: number) {
-      return aFeed(bFeed(n))
+    feed(batch) {
+      return rowMulMat(batch, weights)
     },
-    prime(n: number) {
-      return bPrime(aPrime(n))
+    backProp(batch, error) {
+      return {
+        changes: colMulRow(batch, error),
+        output: matMulCol(weights, error),
+      }
+    },
+    storeChanges(changes) {
+      matAddMat(deltas, changes)
+    },
+    applyChanges() {
+      matAddMat(weights, deltas)
+      deltas = matrix(outputSize, inputSize, () => 0)
+    },
+    getRepresentation() {
+      return weights
     },
   }
 }
 
-export class Split_Vanilla_ANN {
+function mul(a: number, b: number) {
+  return a * b
+}
+function add(a: number, b: number) {
+  return a + b
+}
+
+export function biasTransform(
+  inputSize: number,
+  seed: (i: number) => number = i =>
+    i % 2 === 0 ? Math.random() : -Math.random(),
+): Transformation<number[]> {
+  const weights = vector(inputSize, seed)
+  let deltas = vector(inputSize, () => 0)
+  return {
+    feed(batch) {
+      return rowZip(batch, weights, add)
+    },
+    backProp(batch, error) {
+      return {
+        changes: rowZip(batch, error, mul),
+        output: error,
+      }
+    },
+    storeChanges(changes) {
+      rowZip(deltas, changes, add, deltas)
+    },
+    applyChanges() {
+      rowZip(weights, deltas, add, weights)
+      deltas = vector(inputSize, () => 0)
+    },
+    getRepresentation() {
+      return weights
+    },
+  }
+}
+
+export function leakyReluTransform(): Transformation<null> {
+  return {
+    feed(batch) {
+      return mapRow(batch, x => (x > 0 ? x : x / 10))
+    },
+    backProp(batch, error) {
+      return {
+        changes: null,
+        output: mapRow(
+          batch,
+          (x, i) => (x > 0 ? error[i] * 1 : error[i] * 0.1),
+        ),
+      }
+    },
+    storeChanges() {},
+    applyChanges() {},
+    getRepresentation() {
+      return null
+    },
+  }
+}
+
+export class Split_Vanilla_ANN<Ts extends Transformation<any>[]> {
   lr: number
-  transforms: Transformation[]
+  transforms: Ts
 
-  constructor(lr: number, layers: LayerDeclaration) {
+  constructor(lr: number, transforms: Ts) {
     this.lr = lr
-    this.transforms = this.initTransforms(layers, () => Math.random() * 2 - 1)
+    this.transforms = transforms
   }
 
-  initTransforms(layers: LayerDeclaration, seed: () => number = Math.random) {
-    const [, ...activationLayers] = layers
-    const bandwidth = layers.map(({ nodes }) => nodes)
-
-    const transforms: Transformation[] = new Array(activationLayers.length)
-
-    for (let i = 0; i < activationLayers.length; i++) {
-      const weights: number[][] = matrix(bandwidth[i + 1], bandwidth[i], seed)
-      transforms[i] = { weights, activation: activationLayers[i].activation }
-    }
-
-    return transforms
-  }
-
-  feed(input: number[]): { output: number[]; feedTrace: number[][] } {
-    const feedTrace: number[][] = [input]
-    const output = this.transforms.reduce(
-      (output: number[], { weights, activation: { feed } }: Transformation) => {
-        const activationLayer = rowMulMat(output, weights)
-        mapRow(activationLayer, feed, activationLayer)
-        feedTrace.push(activationLayer)
-        return activationLayer
+  feed(
+    input: number[],
+  ): {
+    output: number[]
+    feedTrace: Trace[]
+  } {
+    const feedTrace: Trace[] = []
+    const output = this.transforms.reduce<number[]>(
+      <C>(batch: number[], { feed }: Transformation<C>) => {
+        const output = feed(batch)
+        feedTrace.push({ batch, output })
+        return output
       },
       input,
     )
-    // NOTE: could add bias here
     return {
       output,
       feedTrace,
     }
   }
 
-  backProp(feedBack: { feedTrace: number[][]; error: number[] }[]) {
-    // TODO: create deltas matrix and any reusable buffers
-
-    const updates = this.transforms.map(({ weights }) => {
-      return matrix(weights.length, weights[0].length, () => 0)
-    })
-
+  backProp(feedBack: { feedTrace: Trace[]; error: number[] }[]) {
     for (let { feedTrace, error } of feedBack) {
-      const delta = mapRow(error, n => (n * this.lr) / feedBack.length)
-      this.transforms.reduceRight(
-        (
-          delta: number[],
-          { weights, activation: { prime } }: Transformation,
+      const delta = mapRow(
+        error,
+        n => (n * this.lr) / feedBack.length / error.length,
+      )
+      this.transforms.reduceRight<number[]>(
+        <C>(
+          error: number[],
+          { backProp, storeChanges }: Transformation<C>,
           i: number,
         ) => {
-          // NOTE: add to a blank matrix for storing deltas
-          // NOTE: when batching
-          const changes = colMulRow(feedTrace[i], delta)
-          matAddMat(updates[i], changes)
-          const nextDelta = rowZip(
-            matMulCol(weights, delta),
-            mapRow(feedTrace[i], prime),
-            (a, b) => a * b,
-            // TODO: clean up memory alocs in the batched backprop
-          )
-          return nextDelta
+          const { changes, output } = backProp(feedTrace[i].batch, error)
+          storeChanges(changes)
+          return output
         },
         delta,
       )
     }
-
-    this.transforms.forEach(({ weights }, i) => {
-      matAddMat(weights, updates[i])
-    })
+    this.transforms.forEach(({ applyChanges }) => applyChanges())
   }
-  getWeights(): number[][][] {
-    return this.transforms.map(({ weights }) => weights)
+
+  getRepresentation(): unknown[] {
+    return this.transforms.map(({ getRepresentation }) => getRepresentation())
   }
 }
