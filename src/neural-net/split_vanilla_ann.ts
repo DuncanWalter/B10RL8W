@@ -90,7 +90,7 @@ export function biasTransform(
   }
 }
 
-export function reluTransform(): Transformation<null> {
+export function leakyReluTransform(): Transformation<null> {
   return {
     feed(batch) {
       return mapRow(batch, x => (x > 0 ? x : x / 10))

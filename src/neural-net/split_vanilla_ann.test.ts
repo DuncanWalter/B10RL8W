@@ -1,7 +1,7 @@
 import {
   Split_Vanilla_ANN,
   denseTransform,
-  reluTransform,
+  leakyReluTransform,
   biasTransform,
 } from './split_vanilla_ann'
 import { batchTransform } from './ann_helper'
@@ -17,11 +17,11 @@ test('The xor function works', () => {
     denseTransform(2, 11),
     biasTransform(11),
     batchTransform(),
-    reluTransform(),
+    leakyReluTransform(),
     denseTransform(11, 5),
     biasTransform(5),
     batchTransform(),
-    reluTransform(),
+    leakyReluTransform(),
     denseTransform(5, 1),
   ])
   for (let epoch = 0; epoch < 3000; epoch++) {
