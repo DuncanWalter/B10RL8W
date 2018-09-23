@@ -9,19 +9,19 @@ import {
 import { Agent, FeedBack } from '.'
 
 type ANN = {
-  feed(
+  passForward(
     input: number[],
   ): {
-    feedTrace: number[][]
+    trace: unknown
     output: number[]
   }
-  backProp(feedBack: { feedTrace: number[][]; error: number[] }[]): void
-  getWeights(): number[][][]
+  passBack(feedBack: { trace: unknown; error: number[] }[]): void
+  serialize(): string
 }
 
 export type ANNSummary = {
   agentType: string
-  qualityWeights: number[][][]
+  content: string
 }
 
 export type GameSummary<L extends number> = {
@@ -101,32 +101,30 @@ export const contextlessSummary = joinSummaries(
   actionSummary,
 )
 
-export function createContextlessAgent(
-  net: ANN,
-): Agent<number[][], ANNSummary> {
+export function createContextlessAgent(net: ANN): Agent<unknown, ANNSummary> {
   return {
     policy(state: State, player: Player, actions: Card[]) {
       return actions
         .map(action => [...contextlessSummary.summary(state, player, action)])
-        .map(data => net.feed(data))
-        .map(({ feedTrace, output: [quality] }, index) => ({
+        .map(data => net.passForward(data))
+        .map(({ trace, output: [quality] }, index) => ({
           quality,
-          trace: feedTrace,
+          trace: trace,
           action: actions[index],
         }))
     },
-    train(feedBack: FeedBack<number[][]>[]) {
-      net.backProp(
+    train(feedBack: FeedBack<unknown>[]) {
+      net.passBack(
         feedBack.map(({ expected, actual, trace }) => ({
           error: [actual - expected],
-          feedTrace: trace,
+          trace: trace,
         })),
       )
     },
     summary() {
       return {
         agentType: 'contextless',
-        qualityWeights: net.getWeights(),
+        content: net.serialize(),
       }
     },
   }

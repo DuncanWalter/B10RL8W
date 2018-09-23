@@ -24,9 +24,10 @@ export function trainAgent<F>(
           [] as FeedBack<F>[],
         ),
     )
-    if (i % 100 === 0 || i === games - 1) {
+
+    if (i % 5 === 0 || i === games - 1) {
       timerEnd = Date.now()
-      if (timerEnd - timerStart > logRateMilliseconds) {
+      if (timerEnd - timerStart > logRateMilliseconds || i === games - 1) {
         const additionalGamesPlayed = i - lastGameRecorded
         const agentSummary = summary()
         // TODO Implement log function in dashboard
