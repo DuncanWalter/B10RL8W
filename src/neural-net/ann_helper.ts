@@ -1,13 +1,31 @@
 import { Transformation } from './split_vanilla_ann'
+import '../utils/arrayScan'
 
-// export function sigmoid(n: number) {
-//   return 2 / (1 + Math.exp(-n)) - 1
-// }
+export function sigmoid(n: number) {
+  return 2 / (1 + Math.exp(-n)) - 1
+}
 
-// export function sigmoidDeriv(dn: number, n: number) {
-//   const sig = sigmoid(n)
-//   return 2 * sig * (1 - sig)
-// }
+export function sigmoidDeriv(n: number) {
+  const sig = sigmoid(n)
+  return 2 * sig * (1 - sig)
+}
+
+export function sigmoidTransform(): Transformation<null> {
+  return {
+    feed(batch: number[]) {
+      return mapRow(batch, sigmoid)
+    },
+    backProp(batch: number[], error: number[]) {
+      return {
+        output: mapRow(error, (e, i) => sigmoidDeriv(batch[i]) * e),
+        changes: null,
+      }
+    },
+    applyChanges() {},
+    storeChanges() {},
+    getRepresentation() {},
+  }
+}
 
 function mean(vec: number[]) {
   let sum = 0
@@ -98,6 +116,68 @@ export function batchTransform(): Transformation<{
         scale,
         shift,
       }
+    },
+  }
+}
+
+export function splitTransform(
+  ...transforms: {
+    transform: Transformation<any>
+    inCount: number
+    outCount: number
+  }[]
+): Transformation<unknown[]> {
+  return {
+    feed(batch: number[]) {
+      const outputs = transforms.scan(
+        ({ allocated }, { transform, inCount }) => {
+          return {
+            result: transform.feed(batch.slice(allocated, allocated + inCount)),
+            allocated: allocated + inCount,
+          }
+        },
+        { allocated: 0 },
+      )
+      const output = Array.prototype.concat.apply(
+        [],
+        mapRow(outputs, acc => acc.result, outputs),
+      )
+      return output
+    },
+    backProp(batch: number[], error: number[]) {
+      const outputs = transforms.scan(
+        ({ allocatedIn, allocatedOut }, { inCount, outCount, transform }) => {
+          const { output, changes } = transform.backProp(
+            batch.slice(allocatedIn, allocatedIn + inCount),
+            error.slice(allocatedOut, allocatedOut + outCount),
+          )
+          return {
+            result: output,
+            changes,
+            allocatedIn: allocatedIn + inCount,
+            allocatedOut: allocatedOut + outCount,
+          }
+        },
+        { allocatedIn: 0, allocatedOut: 0 },
+      )
+      const changes = mapRow(outputs, acc => acc.changes)
+      const output = Array.prototype.concat.apply(
+        [],
+        mapRow(outputs, acc => acc.result, outputs),
+      )
+      return {
+        changes,
+        output,
+      }
+    },
+    applyChanges() {
+      transforms.forEach(trans => trans.transform.applyChanges())
+    },
+    storeChanges(changes) {
+      transforms.forEach((trans, i) => trans.transform.storeChanges(changes[i]))
+    },
+    getRepresentation() {
+      return transforms.map(trans => trans.transform.getRepresentation())
     },
   }
 }
@@ -224,11 +304,11 @@ export function matMulCol(mat: number[][], col: number[]): number[] {
   return output
 }
 
-export function mapRow(
-  row: number[],
-  fun: (n: number, i: number) => number,
-  out?: number[],
-): number[] {
+export function mapRow<I, O>(
+  row: I[],
+  fun: (n: I, i: number) => O,
+  out?: any[],
+): O[] {
   const output = out !== undefined ? out : new Array(row.length)
   const length = row.length
   for (let i = 0; i < length; i++) {

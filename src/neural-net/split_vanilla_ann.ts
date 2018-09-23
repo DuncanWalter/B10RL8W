@@ -144,10 +144,7 @@ export class Split_Vanilla_ANN<Ts extends Transformation<any>[]> {
 
   backProp(feedBack: { feedTrace: Trace[]; error: number[] }[]) {
     for (let { feedTrace, error } of feedBack) {
-      const delta = mapRow(
-        error,
-        n => (n * this.lr) / feedBack.length / error.length,
-      )
+      const delta = mapRow(error, n => (n * this.lr) / feedBack.length)
       this.transforms.reduceRight<number[]>(
         <C>(
           error: number[],
