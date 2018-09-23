@@ -1,6 +1,6 @@
 # B10RL8W
 
-Central impl repository for our RL project
+Central impl repository for our RL project. Our project teaches a computer to play Hearts using reinforcement learning and a fair bit of trickery.
 
 # TODO
 
@@ -42,6 +42,12 @@ npm run test
 ```
 npm run start-dev
 ```
+
+# Potential other games to play for fun
+
+- Nested Tic-Tac-Toe
+- Hive (perhaps simplified)
+- ???
 
 # Linux
 
