@@ -35,7 +35,7 @@ function sum(i: number, v: (i: number) => number) {
   return sum
 }
 
-const epsilon = 1 / 10 ** 12
+const epsilon = 10 ** -12
 export function batchTransform(): Transformation<{
   shift: number
   scale: number
