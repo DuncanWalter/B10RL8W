@@ -1,13 +1,30 @@
 import { Transformation } from './split_vanilla_ann'
 
-// export function sigmoid(n: number) {
-//   return 2 / (1 + Math.exp(-n)) - 1
-// }
+export function sigmoid(n: number) {
+  return 2 / (1 + Math.exp(-n)) - 1
+}
 
-// export function sigmoidDeriv(dn: number, n: number) {
-//   const sig = sigmoid(n)
-//   return 2 * sig * (1 - sig)
-// }
+export function sigmoidDeriv(n: number) {
+  const sig = sigmoid(n)
+  return 2 * sig * (1 - sig)
+}
+
+export function sigmoidTransform(): Transformation<null> {
+  return {
+    feed(batch: number[]) {
+      return mapRow(batch, sigmoid)
+    },
+    backProp(batch: number[], error: number[]) {
+      return {
+        output: mapRow(error, (e, i) => sigmoidDeriv(batch[i]) * e),
+        changes: null,
+      }
+    },
+    applyChanges() {},
+    storeChanges() {},
+    getRepresentation() {},
+  }
+}
 
 function mean(vec: number[]) {
   let sum = 0
@@ -98,6 +115,68 @@ export function batchTransform(): Transformation<{
         scale,
         shift,
       }
+    },
+  }
+}
+
+export function splitTransform(
+  ...transforms: {
+    transform: Transformation<any>
+    inCount: number
+    outCount: number
+  }[]
+): Transformation<Transformation<any>[]> {
+  const allChanges: any[] = []
+
+  return {
+    feed(batch: number[]) {
+      return transforms.reduce<{ result: number[]; allocated: number }>(
+        ({ result, allocated }, trans) => {
+          const newAllocated = allocated + trans.inCount
+          return {
+            result: result.concat(
+              trans.transform.feed(batch.slice(allocated, newAllocated)),
+            ),
+            allocated: newAllocated,
+          }
+        },
+        { result: [], allocated: 0 },
+      ).result
+    },
+    backProp(batch: number[], error: number[]) {
+      return {
+        output: transforms.reduce<{
+          result: number[]
+          allocatedIn: number
+          allocatedOut: number
+        }>(
+          ({ result, allocatedIn, allocatedOut }, trans, i) => {
+            const newAllocatedIn = allocatedIn + trans.inCount
+            const newAllocatedOut = allocatedOut + trans.outCount
+            const { output, changes } = trans.transform.backProp(
+              batch.slice(allocatedIn, newAllocatedIn),
+              error.slice(allocatedOut, newAllocatedOut),
+            )
+            allChanges[i] = changes
+            return {
+              result: result.concat(output),
+              allocatedIn: newAllocatedIn,
+              allocatedOut: newAllocatedOut,
+            }
+          },
+          { result: [], allocatedIn: 0, allocatedOut: 0 },
+        ).result,
+        changes: allChanges,
+      }
+    },
+    applyChanges() {
+      transforms.forEach(trans => trans.transform.applyChanges())
+    },
+    storeChanges(changes) {
+      transforms.forEach((trans, i) => trans.transform.storeChanges(changes[i]))
+    },
+    getRepresentation() {
+      return transforms.map(trans => trans.transform.getRepresentation())
     },
   }
 }

@@ -4,8 +4,7 @@ import {
   leakyReluTransform,
   biasTransform,
 } from './split_vanilla_ann'
-import { batchTransform } from './ann_helper'
-import { range } from '../utils/range'
+import { batchTransform, splitTransform, sigmoidTransform } from './ann_helper'
 
 test('The xor function works', () => {
   // xor function
@@ -21,8 +20,11 @@ test('The xor function works', () => {
     denseTransform(11, 5),
     biasTransform(5),
     batchTransform(),
-    leakyReluTransform(),
-    denseTransform(5, 1),
+    splitTransform(
+      { transform: leakyReluTransform(), inCount: 2, outCount: 2 },
+      { transform: sigmoidTransform(), inCount: 3, outCount: 3 },
+    ),
+    denseTransform(3, 1),
   ])
   for (let epoch = 0; epoch < 3000; epoch++) {
     let feedBack = []
