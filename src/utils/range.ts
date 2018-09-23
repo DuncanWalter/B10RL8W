@@ -1,7 +1,5 @@
-export function range(n: number): number[] {
-  const arr = Array(n)
+export function* range(n: number): IterableIterator<number> {
   for (let i = 0; i < n; i++) {
-    arr[i] = i
+    yield i
   }
-  return arr
 }
