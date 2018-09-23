@@ -11,6 +11,7 @@ export function interpretHistory<F>(
 ): {
   reward: number
   feedBack: FeedBack<F>[]
+  score: number
 } {
   if (history.length === 0) {
     throw new Error('Game history is empty or was not terminated')
@@ -22,6 +23,7 @@ export function interpretHistory<F>(
     return {
       reward: head.reward,
       feedBack: [],
+      score: head.actor.score,
     }
   } else {
     const rest = interpretHistory(tail)
