@@ -13,14 +13,14 @@ export function logicalTransform(outputSize: number): TransformationFactory {
   return pipeTransform(
     biasTransform(),
     // guardTransform(),
-    splitTransform(
-      { weight: 1, factory: sigmoidTransform() },
-      {
-        weight: 2,
-        factory: leakyReluTransform(0),
-      },
-    ),
-    // leakyReluTransform(0),
+    // splitTransform(
+    //   { weight: 1, factory: sigmoidTransform() },
+    //   {
+    //     weight: 2,
+    //     factory: leakyReluTransform(0),
+    //   },
+    // ),
+    leakyReluTransform(0),
     // guardTransform(),
     denseTransform(outputSize),
     // guardTransform(),
