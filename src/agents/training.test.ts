@@ -26,7 +26,11 @@ test('Running random agents works', () => {
   let agent = createContextlessAgent(ann)
   trainAgent(
     agent,
+<<<<<<< HEAD
     50,
+=======
+    15,
+>>>>>>> 1470163... let's not have that huge testing time
     true,
     (gamesPlayed, summary) => {
       // console.log(gamesPlayed)
