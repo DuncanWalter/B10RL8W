@@ -1,11 +1,13 @@
 import { TransformationFactory } from '.'
 import '../../utils/arrayScan'
+import { identityTransform } from './identity'
 
 export function pipeTransform(
   ...transformFactories: TransformationFactory[]
 ): TransformationFactory {
-  // TODO in the case that no factories are passed, return an identity transform factory
-
+  if (transformFactories.length === 0) {
+    return identityTransform()
+  }
   return ({ size, serializedContent }) => {
     const content = serializedContent ? JSON.parse(serializedContent) : []
     const transforms = transformFactories.scan(

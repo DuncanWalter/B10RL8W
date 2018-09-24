@@ -1,13 +1,16 @@
 import { TransformationFactory, Transformation } from '.'
 import { mapRow } from '../batchMath'
+import { identityTransform } from './identity'
 
 export function splitTransform(
   ...transformFactories: (
     | TransformationFactory
     | { transformFactory: TransformationFactory; weight: number })[]
-) {
+): TransformationFactory {
+  if (transformFactories.length === 0) {
+    return identityTransform()
+  }
   return ({ size, serializedContent }) => {
-    // TODO on no factories passed, identity factory
     const totalWeight = transformFactories.reduce((total, factory) => {
       if (factory instanceof Function) {
         return total + 1
@@ -55,7 +58,10 @@ export function splitTransform(
               trace: miniBatch,
             }
           } else {
-            return output
+            return {
+              output: output.output,
+              trace: output.trace,
+            }
           }
         })
         const output = Array.prototype.concat.apply(
@@ -73,7 +79,7 @@ export function splitTransform(
           ),
         }
       },
-      passBack(traces: unknown[], error: number[]) {
+      passBack(traces: unknown[], error: number[]): number[] {
         const outputs = transforms.scan(
           ({ allocatedIn, allocatedOut }, { inCount, outCount, transform }) => {
             const { output, changes } = transform.passBack(
@@ -99,10 +105,10 @@ export function splitTransform(
           output,
         }
       },
-      applyLearning() {
+      applyLearning(): void {
         transforms.forEach(trans => trans.transform.applyLearning())
       },
-      serialize() {
+      serialize(): string {
         return JSON.stringify(
           transforms.map(trans => trans.transform.serialize()),
         )

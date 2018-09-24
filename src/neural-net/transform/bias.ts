@@ -2,13 +2,13 @@ import { TransformationFactory } from '.'
 import { vector, rowZip, add, mul } from '../batchMath'
 
 export function biasTransform(
-  seed: (i: number) => number = i =>
-    i % 2 === 0 ? Math.random() : -Math.random(),
+  seed: (i: number, n: number) => number = (i, n) =>
+    (i % 2 === 0 ? 1 : -1) * Math.random() * Math.sqrt(6 / n),
 ): TransformationFactory {
   return ({ size, serializedContent }) => {
     const weights = serializedContent
       ? JSON.parse(serializedContent)
-      : vector(size, seed)
+      : vector(size, i => seed(i, size))
     let deltas = vector(size, () => 0)
     return {
       passForward(batch) {
