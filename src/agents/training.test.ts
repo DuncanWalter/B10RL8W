@@ -13,25 +13,25 @@ import { logicalTransform } from '../neural-net/transform/logical'
 test('Running random agents works', () => {
   let ann = new NeuralNet(
     {
-      learningRate: 0.01,
+      learningRate: 0.0000027,
       inputSize: contextlessSummary.size,
     },
     guardTransform(),
-    denseTransform(128),
-    logicalTransform(96),
-    // logicalTransform(64),
+    denseTransform(96),
+    logicalTransform(64),
+    logicalTransform(64),
     denseTransform(1),
   )
 
   let agent = createContextlessAgent(ann)
   trainAgent(
     agent,
-    100,
-    false,
+    50,
+    true,
     (gamesPlayed, summary) => {
-      console.log(gamesPlayed)
-      console.log(summary)
+      // console.log(gamesPlayed)
+      // console.log(summary)
     },
-    3000,
+    1500000,
   )
 })
