@@ -25,21 +25,21 @@ export function splitTransform(
           const length = Math.round(size / totalWeight)
           return {
             start: inNext,
-            next: inNext + length,
+            inNext: inNext + length,
             length,
             transform: factory({ size: length }),
           }
         } else {
-          const length = Math.round((size * factory.weight) / totalWeight)
+          const length = Math.ceil((size * factory.weight) / totalWeight - 0.5)
           return {
             start: inNext,
-            next: inNext + length,
+            inNext: inNext + length,
             length,
             transform: factory.transformFactory({ size: length }),
           }
         }
       },
-      { inNext: 0, outNext },
+      { inNext: 0, outNext: 0 },
     )
 
     return {

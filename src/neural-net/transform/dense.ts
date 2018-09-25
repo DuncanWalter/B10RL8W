@@ -12,7 +12,9 @@ export function denseTransform(
   // Using He Et Al initialization, which is the Relu-adjusted form
   // of Xavier initialization
   seed: (i: number, j: number, n: number) => number = (i, j, n) =>
-    ((i + j) % 2 === 0 ? 1 : -1) * Math.random() * Math.sqrt(6 / n),
+    ((i + j) % 2 === 0 ? 1 : -1) *
+    Math.random() *
+    Math.sqrt(6 / (n + outputSize)),
 ): TransformationFactory {
   return ({ size: inputSize, serializedContent }) => {
     const weights = serializedContent

@@ -40,7 +40,7 @@ function cacheReduce(retention: number, cache: number, input: number): number {
 export function batchNormTransform(
   startScale = 1,
   startShift = 0,
-  retention = 0.97,
+  retention = 0.99,
 ): TransformationFactory {
   return ({ size, serializedContent }) => {
     let scale = vector(size, () => startScale)
@@ -72,7 +72,12 @@ export function batchNormTransform(
               (x - muPrime[i]) ** 2,
             )
             difPrime[i] = cacheReduce(retention, difPrime[i], x - mu[i])
-            return (scale[i] * (x - mu[i])) / sigma[i] + shift[i]
+            return scale[i] * ((x - mu[i]) / sigma[i]) + shift[i] || 0
+            // if (ret > 1000000 || ret !== ret) {
+            //   console.log(ret, scale[i], shift[i], dif[i], sigma[i], mu[i])
+            //   throw new Error('broke on pass forward')
+            // }
+            // return ret
           },
         )
       },
@@ -81,18 +86,37 @@ export function batchNormTransform(
         if (len === 0) return []
 
         return mapRow(x, (x, i) => {
-          const dSigma2 =
-            scale[i] * dif[i] - 1 / (2 * sigma[i] * sigma[i] * sigma[i])
-          const dMu = (scale[i] * error[i]) / sigma[i] - 2 * dif[i] * dSigma2
-          const out =
-            (scale[i] * error[i]) / sigma[i] +
-            (2 * dSigma2 * dif[i]) / len +
-            dMu / len
+          // const dSigma2 =
+          //   len * scale[i] * dif[i] - 1 / (2 * sigma[i] * sigma[i] * sigma[i])
+          // const dMu = (scale[i] * error[i]) / sigma[i] - 2 * dif[i] * dSigma2
+          // const out =
+          //   (scale[i] * error[i]) / sigma[i] +
+          //   (2 * dSigma2 * dif[i]) / len +
+          //   dMu / len
 
-          scalePrime[i] += (2 * error[i] * dif[i]) / sigma[i]
-          shiftPrime[i] += error[i] / len
+          // scalePrime[i] += (2 * error[i] * dif[i]) / sigma[i] / len
+          // console.log(
+          //   scale[i],
+          //   scalePrime[i],
+          //   error[i],
+          //   dif[i],
+          //   sigma[i],
+          //   difPrime[i],
+          // )
+          // shiftPrime[i] += error[i] / len
 
-          return out
+          const out = (error[i] * scale[i]) / sigma[i]
+
+          const ret = out || error[i]
+          if (ret > 10000 || ret !== ret) {
+            console.log(ret, scale[i], error[i], shift[i])
+            console.log('sigma', sigma[i], sigma2Prime[i])
+            console.log('mu', mu[i], muPrime[i])
+            console.log('dif', dif[i], difPrime[i])
+
+            throw new Error('blowing up')
+          }
+          return ret
         })
 
         // const dSigma2 = sum(
@@ -124,7 +148,6 @@ export function batchNormTransform(
         mapRow(mu, (mu, i) => muPrime[i], mu)
         mapRow(sigma, (sigma, i) => (sigma2Prime[i] + epsilon) ** 0.5, sigma)
         mapRow(dif, (dif, i) => difPrime[i], dif)
-
         // scale += dScale
         // shift += dShift
         // dScale = 0
