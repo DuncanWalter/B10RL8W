@@ -44,7 +44,7 @@ test('The xor function works', () => {
       feedBack.push({ trace, error: error })
     }
     if (epoch % 1000 === 999) {
-      console.log(err)
+      // console.log(err)
     }
     ann.passBack(feedBack)
     feedBack = []
