@@ -1,17 +1,16 @@
 import { TransformationFactory } from '.'
 import { mapRow } from '../batchMath'
 
-export function leakyReluTransform(): TransformationFactory<number[]> {
+export function leakyReluTransform(
+  slope: number = 0.05,
+): TransformationFactory {
   return ({ size }) => ({
-    passForward(batch) {
-      return mapRow(batch, x => (x > 0 ? x : x * 0.05))
+    type: 'simplified',
+    passForward(input) {
+      return mapRow(input, x => (x > 0 ? x : x * slope))
     },
-    passBack(batch, error) {
-      return mapRow(batch, (x, i) => (x > 0 ? error[i] : error[i] * 0.05))
-    },
-    applyLearning() {},
-    serialize() {
-      return 'null'
+    passBack(input, error) {
+      return mapRow(input, (x, i) => (x > 0 ? error[i] : error[i] * slope))
     },
     size,
   })

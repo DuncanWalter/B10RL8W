@@ -23,14 +23,10 @@ export function colMulRow(col: number[], row: number[]): number[][] {
   return output
 }
 
-export function vector(
-  length: number,
-  seed: (i: number, j: number) => number,
-  i: number = 0,
-): number[] {
+export function vector(length: number, seed: (i: number) => number): number[] {
   const output = new Array(length)
-  for (let j = 0; j < length; j++) {
-    output[j] = seed(i, j)
+  for (let i = 0; i < length; i++) {
+    output[i] = seed(i)
   }
   return output
 }
@@ -42,7 +38,7 @@ export function matrix(
 ): number[][] {
   const output = new Array(width)
   for (let i = 0; i < width; i++) {
-    output[i] = vector(height, seed, i)
+    output[i] = vector(height, j => seed(i, j))
   }
   return output
 }

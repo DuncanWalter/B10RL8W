@@ -1,13 +1,14 @@
 import { mapRow } from './batchMath'
 import {
-  Transformation,
   TransformationFactory,
   pipeTransform,
+  regularize,
+  UniformTransformation,
 } from './transform'
 
 export default class NeuralNet {
   learningRate: number
-  transform: Transformation<unknown>
+  transform: UniformTransformation<any>
 
   constructor(
     config: {
@@ -18,10 +19,12 @@ export default class NeuralNet {
     ...transformFactories: TransformationFactory[]
   ) {
     this.learningRate = config.learningRate
-    this.transform = pipeTransform(...transformFactories)({
-      size: config.inputSize,
-      serializedContent: config.serializedContent,
-    })
+    this.transform = regularize(
+      pipeTransform(...transformFactories)({
+        size: config.inputSize,
+        serializedContent: config.serializedContent,
+      }),
+    )
   }
 
   passForward(

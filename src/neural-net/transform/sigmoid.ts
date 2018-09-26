@@ -12,15 +12,12 @@ export function sigmoidPrime(n: number) {
 
 export function sigmoidTransform(): TransformationFactory {
   return ({ size }) => ({
-    passForward(batch: number[]) {
-      return mapRow(batch, sigmoid)
+    type: 'simplified',
+    passForward(input: number[]) {
+      return mapRow(input, sigmoid)
     },
-    passBack(batch: number[], error: number[]) {
-      return mapRow(error, (e, i) => sigmoidPrime(batch[i]) * e)
-    },
-    applyLearning() {},
-    serialize() {
-      return 'null'
+    passBack(input: number[], error: number[]) {
+      return mapRow(error, (e, i) => sigmoidPrime(input[i]) * e)
     },
     size,
   })

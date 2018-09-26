@@ -2,15 +2,12 @@ import { TransformationFactory } from '.'
 
 export function identityTransform(): TransformationFactory {
   return ({ size }) => ({
-    passForward(batch) {
-      return batch
+    type: 'simplified',
+    passForward(input) {
+      return input
     },
-    passBack(batch, error) {
+    passBack(input, error) {
       return error
-    },
-    applyLearning() {},
-    serialize() {
-      return 'null'
     },
     size,
   })

@@ -9,8 +9,7 @@ import {
 
 export function denseTransform(
   outputSize: number,
-  // Using He Et Al initialization, which is the Relu-adjusted form
-  // of Xavier initialization
+  // Using Uniform Xavier initialization
   seed: (i: number, j: number, n: number) => number = (i, j, n) =>
     ((i + j) % 2 === 0 ? 1 : -1) *
     Math.random() *
@@ -22,6 +21,7 @@ export function denseTransform(
       : matrix(outputSize, inputSize, (i, j) => seed(i, j, inputSize))
     let deltas = matrix(outputSize, inputSize, () => 0)
     return {
+      type: 'simplified',
       passForward(batch) {
         return rowMulMat(batch, weights)
       },

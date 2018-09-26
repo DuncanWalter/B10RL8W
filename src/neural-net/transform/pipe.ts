@@ -1,6 +1,6 @@
-import { TransformationFactory } from '.'
-import '../../utils/arrayScan'
+import { TransformationFactory, regularize } from '.'
 import { identityTransform } from './identity'
+import '../../utils/arrayScan'
 
 export function pipeTransform(
   ...transformFactories: TransformationFactory[]
@@ -12,35 +12,33 @@ export function pipeTransform(
     const content = serializedContent ? JSON.parse(serializedContent) : []
     const transforms = transformFactories.scan(
       ({ size }, transformFactory, i) => {
-        return transformFactory({ size, serializedContent: content[i] })
+        return regularize(
+          transformFactory({ size, serializedContent: content[i] }),
+        )
       },
       { size },
     )
     return {
-      passForward(batch: number[]) {
-        const traces = transforms.scan(
-          ({ output: batch }, { passForward }) => {
-            const output = passForward(batch)
-            if (output instanceof Array) {
-              return { output, trace: batch }
-            } else {
-              return { output: output.output, trace: output.trace }
-            }
+      type: 'uniform',
+      passForward(x: number[]) {
+        const trace = transforms.scan(
+          ({ output: x }, { passForward }) => {
+            return passForward(x)
           },
-          { output: batch },
+          { output: x },
         )
-        // console.log(traces)
         return {
-          trace: traces,
-          output: traces[traces.length - 1].output,
+          trace,
+          output: trace[trace.length - 1].output,
         }
       },
-      passBack(traces: any, error: number[]) {
+      passBack(trace: any, error: number[]) {
         return transforms.reduceRight((error, { passBack }, i) => {
-          const n = passBack(traces[i].trace, error)
-          // console.log(n)
-          return n
+          return passBack(trace[i].trace, error)
         }, error)
+      },
+      discardLearning() {
+        transforms.forEach(({ discardLearning }) => discardLearning())
       },
       applyLearning() {
         transforms.forEach(({ applyLearning }) => applyLearning())

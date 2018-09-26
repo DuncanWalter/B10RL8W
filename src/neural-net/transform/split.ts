@@ -1,48 +1,57 @@
-import { TransformationFactory, Transformation } from '.'
+import { TransformationFactory, regularize } from '.'
 import { mapRow } from '../batchMath'
 import { identityTransform } from './identity'
+
+function weighted(
+  factory:
+    | TransformationFactory
+    | { factory: TransformationFactory; weight: number },
+): { factory: TransformationFactory; weight: number } {
+  if (factory instanceof Function) {
+    return {
+      weight: 1,
+      factory,
+    }
+  } else {
+    return factory
+  }
+}
 
 export function splitTransform(
   ...transformFactories: (
     | TransformationFactory
-    | { transformFactory: TransformationFactory; weight: number })[]
+    | { factory: TransformationFactory; weight: number })[]
 ): TransformationFactory {
   if (transformFactories.length === 0) {
     return identityTransform()
   }
   return ({ size, serializedContent }) => {
-    const totalWeight = transformFactories.reduce((total, factory) => {
-      if (factory instanceof Function) {
-        return total + 1
-      } else {
-        return total + factory.weight
-      }
-    }, 0)
+    const content = serializedContent ? JSON.parse(serializedContent) : []
 
-    const transformSlices = transformFactories.scan(
-      ({ inNext, outNext }, factory, i) => {
-        if (factory instanceof Function) {
-          const length = Math.round(size / totalWeight)
-          return {
-            start: inNext,
-            inNext: inNext + length,
-            length,
-            transform: factory({ size: length }),
-          }
-        } else {
-          const length = Math.ceil((size * factory.weight) / totalWeight - 0.5)
-          return {
-            start: inNext,
-            inNext: inNext + length,
-            length,
-            transform: factory.transformFactory({ size: length }),
-          }
+    const totalWeight = transformFactories
+      .map(weighted)
+      .reduce((total, factory) => {
+        return total + factory.weight
+      }, 0)
+
+    const transformSlices = transformFactories.map(weighted).scan(
+      ({ next }, { factory, weight }, i) => {
+        const length = Math.ceil((size * weight) / totalWeight - 0.5)
+        const transform = regularize(
+          factory({ size: length, serializedContent: content[i] }),
+        )
+        return {
+          start: next,
+          length,
+          next: next + length,
+          transform,
         }
       },
-      { inNext: 0, outNext: 0 },
+      { next: 0 },
     )
 
     return {
+      type: 'uniform',
       passForward(batch: number[]) {
         const outputs = mapRow(transformSlices, transform => {
           const {
@@ -50,19 +59,8 @@ export function splitTransform(
             length,
             transform: { passForward },
           } = transform
-          const miniBatch = batch.slice(start, length)
-          const output = passForward(miniBatch)
-          if (output instanceof Array) {
-            return {
-              output,
-              trace: miniBatch,
-            }
-          } else {
-            return {
-              output: output.output,
-              trace: output.trace,
-            }
-          }
+          const inputSlice = batch.slice(start, start + length)
+          return passForward(inputSlice)
         })
         const output = Array.prototype.concat.apply(
           [],
@@ -80,40 +78,39 @@ export function splitTransform(
         }
       },
       passBack(traces: unknown[], error: number[]): number[] {
-        const outputs = transforms.scan(
-          ({ allocatedIn, allocatedOut }, { inCount, outCount, transform }) => {
-            const { output, changes } = transform.passBack(
-              batch.slice(allocatedIn, allocatedIn + inCount),
-              error.slice(allocatedOut, allocatedOut + outCount),
+        const outputs = transformSlices.scan(
+          ({ allocated }, { transform: { size, passBack } }, i) => {
+            const output = passBack(
+              traces[i],
+              error.slice(allocated, allocated + size),
             )
             return {
-              result: output,
-              changes,
-              allocatedIn: allocatedIn + inCount,
-              allocatedOut: allocatedOut + outCount,
+              output,
+              allocated: allocated + size,
+              wazzafu: error.slice(allocated, allocated + size),
             }
           },
-          { allocatedIn: 0, allocatedOut: 0 },
+          { allocated: 0 },
         )
-        const changes = mapRow(outputs, acc => acc.changes)
-        const output = Array.prototype.concat.apply(
+        const out = Array.prototype.concat.apply(
           [],
-          mapRow(outputs, acc => acc.result, outputs),
+          mapRow(outputs, acc => acc.output, outputs),
         )
-        return {
-          changes,
-          output,
-        }
+        return out
       },
       applyLearning(): void {
-        transforms.forEach(trans => trans.transform.applyLearning())
+        transformSlices.forEach(({ transform }) => transform.applyLearning())
       },
+      discardLearning(): void {},
       serialize(): string {
         return JSON.stringify(
-          transforms.map(trans => trans.transform.serialize()),
+          transformSlices.forEach(({ transform }) => transform.serialize()),
         )
       },
-      size: 0,
+      size: transformSlices.reduce(
+        (size, { transform }) => size + transform.size,
+        0,
+      ),
     }
   }
 }
