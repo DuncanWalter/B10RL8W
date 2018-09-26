@@ -37,7 +37,7 @@ test('The xor function works', () => {
     denseTransform(1),
   )
 
-  for (let epoch = 0; epoch < 5000; epoch++) {
+  for (let epoch = 0; epoch < 10; epoch++) {
     let feedBack = []
     let err = 0
     for (let i in xData) {
@@ -49,7 +49,7 @@ test('The xor function works', () => {
     // if (epoch % 1000 === 999) {
     //   console.log(err / 4)
     // }
-    ann.passBack(feedBack)
+    console.log(ann.passBack(feedBack))
     // break
   }
 })

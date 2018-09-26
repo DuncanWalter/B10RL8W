@@ -28,10 +28,6 @@ export function guardTransform(
           return (e * (max[i] - min[i])) / (ceil - floor)
         })
       },
-      discardLearning() {
-        min = vector(size, () => Infinity)
-        max = vector(size, () => -Infinity)
-      },
       serialize(): string {
         return JSON.stringify({ min, max })
       },

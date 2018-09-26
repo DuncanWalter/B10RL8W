@@ -1,4 +1,4 @@
-import { mapRow } from './batchMath'
+import { mapRow, rowZip, vector } from './batchMath'
 import {
   TransformationFactory,
   pipeTransform,
@@ -8,6 +8,7 @@ import {
 
 export default class NeuralNet {
   learningRate: number
+  inputSize: number
   transform: UniformTransformation<any>
 
   constructor(
@@ -18,6 +19,7 @@ export default class NeuralNet {
     },
     ...transformFactories: TransformationFactory[]
   ) {
+    this.inputSize = config.inputSize
     this.learningRate = config.learningRate
     this.transform = regularize(
       pipeTransform(...transformFactories)({
@@ -27,31 +29,24 @@ export default class NeuralNet {
     )
   }
 
-  passForward(
-    input: number[],
-  ): {
-    output: number[]
-    trace: unknown[]
-  } {
-    const { output, trace } = this.transform.passForward(input) as {
-      output: number[]
-      trace: unknown[]
-    }
-    return {
-      output,
-      trace,
-    }
+  passForward(input: number[]): { output: number[]; trace: unknown } {
+    return this.transform.passForward(input)
   }
 
   passBack(feedBack: { trace: unknown; error: number[] }[]) {
+    const heat = vector(this.inputSize, () => 0)
+    const mean = vector(this.inputSize, () => 0)
     for (let { trace, error } of feedBack) {
-      const delta = mapRow(
+      const scaledError = mapRow(
         error,
         n => (n * this.learningRate) / feedBack.length,
       )
-      this.transform.passBack(trace, delta)
+      const inputError = this.transform.passBack(trace, scaledError)
+      rowZip(heat, inputError, (a, b) => a + Math.abs(b), heat)
+      rowZip(mean, inputError, (a, b) => a + b, mean)
     }
     this.transform.applyLearning()
+    return { heat, mean }
   }
 
   serialize(): string {

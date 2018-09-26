@@ -2,7 +2,6 @@ export type UniformTransformation<Trace = number[]> = {
   type: 'uniform'
   serialize(): string
   applyLearning(): void
-  discardLearning(): void
   passForward(input: number[]): { output: number[]; trace: Trace }
   passBack(trace: Trace, error: number[]): number[]
   size: number
@@ -12,7 +11,6 @@ export type SimplifiedTransformation = {
   type: 'simplified'
   serialize?(): string
   applyLearning?(): void
-  discardLearning?(): void
   passForward(input: number[]): number[]
   passBack(input: number[], error: number[]): number[]
   size: number
@@ -33,7 +31,6 @@ export function regularize(
       const {
         serialize = () => 'null',
         applyLearning = () => {},
-        discardLearning = () => {},
         passForward,
         passBack,
         size,
@@ -42,7 +39,6 @@ export function regularize(
         type: 'uniform',
         serialize,
         applyLearning,
-        discardLearning,
         passForward: input => ({ trace: input, output: passForward(input) }),
         passBack,
         size,
@@ -61,7 +57,6 @@ export type TransformationFactory = (
 
 export { denseTransform } from './dense'
 export { biasTransform } from './bias'
-// export { batchNormTransform } from './batchNorm'
 export { leakyReluTransform } from './leakyRelu'
 export { splitTransform } from './split'
 export { pipeTransform } from './pipe'

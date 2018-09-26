@@ -37,9 +37,6 @@ export function pipeTransform(
           return passBack(trace[i].trace, error)
         }, error)
       },
-      discardLearning() {
-        transforms.forEach(({ discardLearning }) => discardLearning())
-      },
       applyLearning() {
         transforms.forEach(({ applyLearning }) => applyLearning())
       },

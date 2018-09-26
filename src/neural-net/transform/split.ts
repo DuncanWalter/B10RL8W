@@ -101,7 +101,6 @@ export function splitTransform(
       applyLearning(): void {
         transformSlices.forEach(({ transform }) => transform.applyLearning())
       },
-      discardLearning(): void {},
       serialize(): string {
         return JSON.stringify(
           transformSlices.forEach(({ transform }) => transform.serialize()),
