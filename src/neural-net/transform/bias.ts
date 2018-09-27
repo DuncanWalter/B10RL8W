@@ -3,7 +3,7 @@ import { vector, rowZip, add, mul, mapRow } from '../batchMath'
 
 export function biasTransform(
   seed: (i: number, n: number) => number = (i, n) =>
-    (i % 2 === 0 ? 1 : -1) * Math.random() * Math.sqrt(3 / n),
+    ((i % 2 === 0 ? 1 : -1) * Math.random()) / Math.sqrt(n),
 ): TransformationFactory {
   return ({ size, serializedContent }) => {
     const weights = serializedContent

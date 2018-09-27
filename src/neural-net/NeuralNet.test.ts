@@ -1,39 +1,20 @@
 import NeuralNet from './NeuralNet'
-import {
-  denseTransform,
-  biasTransform,
-  leakyReluTransform,
-  guardTransform,
-  sigmoidTransform,
-} from './transform'
-import { logicalTransform } from './transform/logical'
+import { denseTransform, guardTransform, logicalTransform } from './transform'
 
 test('The xor function works', () => {
-  // xor function
-  // TODO: need test data for our problem
+  // skewed xor function for testing
   let xData = [[0, 0], [0, 37], [1, 0], [1, 37]]
   let yData = [[0], [1], [1], [0]]
 
   let ann = new NeuralNet(
     {
-      learningRate: 0.12,
+      learningRate: 0.08,
       inputSize: 2,
     },
     guardTransform(),
     denseTransform(16),
     logicalTransform(12),
-    logicalTransform(12),
-    // logicalTransform(12),
-    // logicalTransform(5),
-    // biasTransform(),
-    // leakyReluTransform(),
-    // denseTransform(5),
-    // biasTransform(),
-    // leakyReluTransform(),
-    // splitTransform(
-    //   { transform: leakyReluTransform(), inCount: 2, outCount: 2 },
-    //   { transform: sigmoidTransform(), inCount: 3, outCount: 3 },
-    // ),
+    logicalTransform(9),
     denseTransform(1),
   )
 
@@ -49,7 +30,7 @@ test('The xor function works', () => {
     // if (epoch % 1000 === 999) {
     //   console.log(err / 4)
     // }
-    console.log(ann.passBack(feedBack))
+    ann.passBack(feedBack)
     // break
   }
 })
