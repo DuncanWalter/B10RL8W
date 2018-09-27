@@ -269,7 +269,7 @@ export function playGame<N, E, S, W>(
 
   return state.players.map(player => {
     // TODO: I don't really like this reward setup
-    player.assignReward((simplified ? 3.25 : 6.5) - player.score)
+    // player.assignReward((simplified ? 3.25 : 6.5) - player.score)
     return player.terminate()
   }) as [History<N>[], History<E>[], History<S>[], History<W>[]]
 }

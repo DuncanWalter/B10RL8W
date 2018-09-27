@@ -131,4 +131,5 @@ test('Plays a game and interprets the agent histories into training data', () =>
       [] as FeedBack<number>[],
     )
   expect(trainingData.length).toEqual(52)
+  console.log(trainingData)
 })
