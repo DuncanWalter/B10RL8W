@@ -2,8 +2,39 @@ import { Agent, interpretHistory, FeedBack } from '.'
 import { ANNSummary } from './contextless'
 import { playGame } from '../simulator'
 import '../utils/arrayGenerate'
+import { range } from '../utils/range'
 
 const results: number[][] = []
+
+function huberLoss(a: number, b: number) {
+  return 0.5 * Math.min(Math.abs(a - b), 6) ** 2
+}
+
+function mean(vec: number[]) {
+  let sum = 0
+  for (let i = 0; i < vec.length; i++) {
+    sum += vec[i]
+  }
+  return sum / vec.length
+}
+
+function variance(vec: number[], _mean?: number) {
+  const mu = _mean === undefined ? mean(vec) : _mean
+  let sum = 0
+  for (let i = 0; i < vec.length; i++) {
+    const dif = vec[i] - mu
+    sum += dif * dif
+  }
+  return sum / vec.length
+}
+
+function sum(i: number, v: (i: number) => number) {
+  let sum = 0
+  for (let j = 0; j < i; j++) {
+    sum += v(j)
+  }
+  return sum
+}
 
 export function trainAgent<F>(
   { policy, train, summary }: Agent<F, ANNSummary>,
@@ -15,25 +46,24 @@ export function trainAgent<F>(
   let lastGameRecorded = 0
   let timerStart = Date.now()
   let timerEnd: number
-  let snapshots: { gameNumber: number; meanError: number[] }[] = []
-  for (let i = 0; i < games; i++) {
-    const gameOutcomes = playGame(
-      [policy, policy, policy, policy],
-      simplified,
-    ).map(interpretHistory)
+  for (let i = 0; i < games / 8; i++) {
+    const gameOutcomes = [...range(8)].generate(function*() {
+      yield* playGame([policy, policy, policy, policy], simplified).map(
+        interpretHistory,
+      )
+    })
 
-    const meanError = [
-      ...gameOutcomes.generate(function*({ feedBack }) {
-        yield* feedBack
-      }),
-    ].map(
-      ({ expected, actual }) => /*0.5 **/ Math.abs(expected - actual) /** 2*/,
-    )
-    // .reduce((a, b) => a + b, 0) / 52
+    const loss = gameOutcomes.generate(function*({ feedBack }) {
+      yield feedBack.map(({ expected, actual }) => huberLoss(expected, actual))
+    })
 
-    snapshots.push({
-      gameNumber: i + 1,
-      meanError,
+    const batchSummary = [...range(13)].map(i => {
+      const data = loss.map(h => h[i])
+      return {
+        mean: mean(data) | 0,
+        var: variance(data) | 0,
+        scale: mean(data.map(x => Math.abs(x))) | 0,
+      }
     })
 
     train(
@@ -54,18 +84,9 @@ export function trainAgent<F>(
     // )
 
     // break
-    if (i % 200 === 199 || i === games - 1) {
+    if (i % 40 === 39 || i + 1 >= games / 8) {
       timerEnd = Date.now()
-      results.push([
-        ...snapshots
-          .reduce<number[]>((acc, s) => acc.concat(s.meanError), [] as number[])
-          .map(num => num.toFixed(0))
-          .reduce<Map<string, number>>((map, err) => {
-            map.set(err, map.get(err) ? map.get(err)! + 1 : 1)
-            return map
-          }, new Map()),
-      ].sort(([a], [b]) => -b - -a) as any)
-      snapshots = []
+      console.log(batchSummary)
       if (timerEnd - timerStart > logRateMilliseconds || i === games - 1) {
         const additionalGamesPlayed = i - lastGameRecorded
         const agentSummary = summary()
@@ -77,5 +98,4 @@ export function trainAgent<F>(
       }
     }
   }
-  // console.log(results)
 }

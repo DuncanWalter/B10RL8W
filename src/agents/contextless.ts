@@ -116,7 +116,7 @@ export function createContextlessAgent(net: ANN): Agent<unknown, ANNSummary> {
     train(feedBack: FeedBack<unknown>[]) {
       net.passBack(
         feedBack.map(({ expected, actual, trace }) => ({
-          error: [actual - expected],
+          error: [Math.max(-6, Math.min(actual - expected, 6))],
           trace: trace,
         })),
       )
