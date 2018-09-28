@@ -21,7 +21,7 @@ export const contextlessSummary = joinSummaries(
 
 // TODO lift this into a function that can create agents of any leaning kind
 // TODO we need by handing it a gameSummary object.
-export function createContextlessAgent(): Agent<unknown> {
+export function createContextlessAgent(): Agent<unknown, 'contextless'> {
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > 6) {
       return 0.5 * (6 * (Math.abs(a - b) - 6) + 36)
@@ -46,6 +46,7 @@ export function createContextlessAgent(): Agent<unknown> {
   )
 
   return {
+    type: 'contextless',
     policy(state: State, player: Player, actions: Card[]) {
       return actions
         .map(action => [...contextlessSummary.summary(state, player, action)])

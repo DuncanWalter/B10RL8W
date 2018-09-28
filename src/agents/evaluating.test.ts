@@ -7,8 +7,12 @@ test('Evaluating a random agents against itself gives a baseline score', () => {
   let averageScore: number
   const simplified = false
   const expectedScore = simplified ? 3.25 : 6.5
-  evaluateAgent(agent, baseline, 500, simplified, (totalScore, numGames) => {
-    averageScore = totalScore / numGames
-    expect(Math.abs(averageScore - expectedScore)).toBeLessThanOrEqual(0.2)
-  })
+  evaluateAgent(
+    agent,
+    baseline,
+    simplified,
+    (meanScore, stdDevScore, meanPerformance, stdDevPerformance) => {
+      expect(Math.abs(meanScore - expectedScore)).toBeLessThanOrEqual(0.2)
+    },
+  )
 })
