@@ -3,10 +3,10 @@ import Card from '@material-ui/core/Card'
 import { withStyles } from '@material-ui/core/styles'
 
 import { NavBar } from './NavBar'
-import { TrainDialogProps, TrainDialog } from './TrainDialog'
-import { EvalDialogProps, EvalDialog } from './EvalDialog'
-import { ResultDialogProps, ResultDialog } from './ResultDialog'
-import { WelcomeDialogProps, WelcomeDialog } from './WelcomeDialog'
+import TrainDialog, { TrainDialogProps } from './TrainDialog'
+import EvalDialog, { EvalDialogProps } from './EvalDialog'
+import ResultDialog, { ResultDialogProps } from './ResultDialog'
+import WelcomeDialog, { WelcomeDialogProps } from './WelcomeDialog'
 
 type DashboardProps = {
   classes: { [K in keyof typeof styles]: string }
@@ -14,7 +14,7 @@ type DashboardProps = {
 
 type DashboardState = {
   openDialog: number
-  dialogsProps: (
+  dialogs: (
     | { props: TrainDialogProps; type: 'train' }
     | { props: EvalDialogProps; type: 'eval' }
     | { props: ResultDialogProps; type: 'result' }
@@ -43,7 +43,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
     super(props)
     this.state = {
       openDialog: 0,
-      dialogsProps: [
+      dialogs: [
         {
           type: 'welcome',
           props: {
@@ -65,7 +65,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
 
   renderDialog(index: number) {
     const { classes } = this.props
-    const dialogProps = this.state.dialogsProps[index]
+    const dialogProps = this.state.dialogs[index]
 
     let dialog
 
