@@ -13,7 +13,7 @@ type DashboardProps = {
 }
 
 type DashboardState = {
-  openDialog: number
+  activeDialog: number
   dialogs: (
     | { props: TrainDialogProps; type: 'train' }
     | { props: EvalDialogProps; type: 'eval' }
@@ -42,7 +42,7 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
   constructor(props: DashboardProps) {
     super(props)
     this.state = {
-      openDialog: 0,
+      activeDialog: 0,
       dialogs: [
         {
           type: 'welcome',
@@ -97,11 +97,11 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
 
   render() {
     const { classes } = this.props
-    const { openDialog } = this.state
+    const { activeDialog } = this.state
     return (
       <Card className={classes.card}>
         {this.renderNavBar()}
-        {this.renderDialog(openDialog)}
+        {this.renderDialog(activeDialog)}
       </Card>
     )
   }
