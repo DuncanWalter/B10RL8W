@@ -55,11 +55,59 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
     }
   }
 
+  createNewTrainDialog = () => {
+    const { dialogsProps } = this.state
+    const props = {}
+    const openDialog = dialogsProps.length
+    this.setState({
+      openDialog,
+      dialogsProps: dialogsProps.concat([{ type: 'train', props }]),
+    })
+  }
+
+  createNewEvalDialog = () => {
+    const { dialogsProps } = this.state
+    const props = {}
+    const openDialog = dialogsProps.length
+    this.setState({
+      openDialog,
+      dialogsProps: dialogsProps.concat([{ type: 'eval', props }]),
+    })
+  }
+
+  switchDialog = (index: number) => {
+    const { dialogsProps } = this.state
+    this.setState({
+      openDialog: index,
+      dialogsProps,
+    })
+  }
+
+  deleteDialog = (index: number) => {
+    const { dialogsProps } = this.state
+    dialogsProps.splice(index, 1)
+    this.setState({
+      openDialog: 0,
+      dialogsProps,
+    })
+  }
+
   renderNavBar() {
-    const items = [
-      { description: 'Hello there', onClick: () => {} },
-      { description: 'General Kenobi', onClick: () => {} },
-    ]
+    const items = this.state.dialogsProps.map(({ type }, i) => {
+      const description = `${type} (${i})`
+      const onClick = () => this.switchDialog(i)
+      return { description, onClick }
+    })
+    const addTrainDialogItem = {
+      description: 'Train New Agent',
+      onClick: this.createNewTrainDialog,
+    }
+    const addEvalDialogItem = {
+      description: 'Evaluate New Set of Agents',
+      onClick: this.createNewEvalDialog,
+    }
+    items.push(addTrainDialogItem)
+    items.push(addEvalDialogItem)
     return <NavBar entries={items} />
   }
 
