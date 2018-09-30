@@ -18,22 +18,41 @@ type DashboardProps = {
   classes: { [K in keyof typeof styles]: string }
 }
 
+type TrainDialogProps = {
+  props: any
+  type: 'train'
+}
+type EvalDialogProps = {
+  props: any
+  type: 'eval'
+}
+type ResultDialogProps = {
+  props: any
+  type: 'result'
+}
+type WelcomeDialogProps = {
+  message: string
+  type: 'welcome'
+}
+type DialogProps =
+  | TrainDialogProps
+  | EvalDialogProps
+  | ResultDialogProps
+  | WelcomeDialogProps
+
 type DashboardState = {
-  running: boolean
-  logs: Map<string, any>
-  config: {
-    transferLearning: boolean
-    selectedLog: string | null
-    online: boolean
-    suitCount: number
-    gameCount: number
-    agentType:
-      | 'contextless'
-      | 'suit-counting'
-      | 'card-counting'
-      | 'context-learning'
-    simplified: boolean
-  }
+  openDialog: number
+  dialogsProps: DialogProps[]
+  // map of trained agents by 'id'
+  // map of results by ['id1', 'id2', 'id3', 'id4']
+}
+
+type NavBarEntry = {
+  description: string
+  onClick: () => void
+}
+type NavBarProps = {
+  entries: NavBarEntry[]
 }
 
 const styles = {
@@ -51,7 +70,101 @@ const styles = {
   },
 }
 
+class NavBar extends React.Component<NavBarProps> {
+  render() {
+    const { entries } = this.props
+    const elements = entries.map(({ description, onClick }) => (
+      <li>
+        <button onClick={onClick}>{description}</button>
+      </li>
+    ))
+    return <ol>{elements}</ol>
+  }
+}
+
+class WelcomeDialog extends React.Component<WelcomeDialogProps> {
+  render() {
+    const { message } = this.props
+    return <button>{message}</button>
+  }
+}
+
 class Dashboard extends React.Component<DashboardProps, DashboardState> {
+  constructor(props: DashboardProps) {
+    super(props)
+    this.state = {
+      openDialog: 0,
+      dialogsProps: [
+        {
+          type: 'welcome',
+          message:
+            "The Path to a Man's Heart(s) is Through His Neural Network?",
+        },
+      ],
+    }
+  }
+
+  renderNavBar() {
+    const items = [
+      { description: 'Hello there', onClick: () => {} },
+      { description: 'General Kenobi', onClick: () => {} },
+    ]
+    return <NavBar entries={items} />
+  }
+
+  renderDialog(index: number) {
+    const { classes } = this.props
+    const dialogProps = this.state.dialogsProps[index]
+
+    let dialog
+
+    switch (dialogProps.type) {
+      case 'welcome': {
+        dialog = <WelcomeDialog type="welcome" message={dialogProps.message} />
+        break
+      }
+      default: {
+        dialog = `Hamster Huey and the Gooey Kablooie (Attempted to load dialog of type: ${
+          dialogProps.type
+        })`
+        break
+      }
+    }
+
+    return <Card className={classes.card}>{dialog}</Card>
+  }
+
+  render() {
+    const { classes } = this.props
+    const { openDialog } = this.state
+    return (
+      <Card className={classes.card}>
+        {this.renderNavBar()}
+        {this.renderDialog(openDialog)}
+      </Card>
+    )
+  }
+}
+
+type OLDDashboardState = {
+  running: boolean
+  logs: Map<string, any>
+  config: {
+    transferLearning: boolean
+    selectedLog: string | null
+    online: boolean
+    suitCount: number
+    gameCount: number
+    agentType:
+      | 'contextless'
+      | 'suit-counting'
+      | 'card-counting'
+      | 'context-learning'
+    simplified: boolean
+  }
+}
+
+class DashboardOLD extends React.Component<DashboardProps, OLDDashboardState> {
   constructor(props: DashboardProps) {
     super(props)
     this.state = {
