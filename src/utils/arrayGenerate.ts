@@ -1,15 +1,18 @@
 interface Array<T> {
-  generate<U>(gen: (item: T) => IterableIterator<U>): IterableIterator<U>
+  generate<U>(gen: (item: T) => Iterable<U>): U[]
 }
 
-Object.defineProperty(Array.prototype.generate, 'generate', {
-  value: function* generate<T, U>(
+Object.defineProperty(Array.prototype, 'generate', {
+  value: function generate<T, U>(
     this: T[],
-    gen: (item: T) => IterableIterator<U>,
-  ): IterableIterator<U> {
-    for (let item of this) {
-      yield* gen(item)
+    gen: (item: T) => Iterable<U>,
+  ): U[] {
+    function* g(iter: Iterable<T>): IterableIterator<U> {
+      for (let item of iter) {
+        yield* gen(item)
+      }
     }
+    return [...g(this)]
   },
   enumerable: false,
 })

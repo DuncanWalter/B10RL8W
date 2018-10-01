@@ -128,7 +128,7 @@ test('Plays a game and interprets the agent histories into training data', () =>
         acc.push(...feedBack)
         return acc
       },
-      [] as FeedBack<number>[],
+      [] as FeedBack<null>[],
     )
   expect(trainingData.length).toEqual(52)
 })
