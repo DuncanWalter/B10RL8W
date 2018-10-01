@@ -1,4 +1,9 @@
 import React from 'react'
+import Drawer from '@material-ui/core/Drawer'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemText from '@material-ui/core/ListItemText'
+import Divider from '@material-ui/core/Divider'
 
 type NavBarEntry = {
   description: string
@@ -12,10 +17,17 @@ export class NavBar extends React.Component<NavBarProps> {
   render() {
     const { entries } = this.props
     const elements = entries.map(({ description, onClick }) => (
-      <li>
-        <button onClick={onClick}>{description}</button>
-      </li>
+      <div>
+        <ListItem button onClick={onClick}>
+          <ListItemText>{description}</ListItemText>
+        </ListItem>
+        <Divider />
+      </div>
     ))
-    return <ol>{elements}</ol>
+    return (
+      <Drawer variant="permanent" anchor="left">
+        <List>{elements}</List>
+      </Drawer>
+    )
   }
 }
