@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "precommit": "npm run test && pretty-quick",
-    "dev": "parcel ./src/index.html -d build/",
+    "dev": "node ./main.js",
     "build-logger": "tsc --outDir ./build -p ./tsconfig.server.json",
     "run-logger": "node ./build/main.js",
     "test": "jest"
