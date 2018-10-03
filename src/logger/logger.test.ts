@@ -17,9 +17,8 @@ function requestOptions(path: string, method: string) {
 const testFileUpdate: LogUpdate = {
   agentType: 'contextless',
   simplified: true,
-  suitCount: 4,
-  additionalGamesPlayed: 1,
-  newQualityWeights: [[[9001]]],
+  additionalEpochsTrained: 1,
+  serializedContent: 'null',
 }
 
 function testCreateLog(): Promise<void> {
