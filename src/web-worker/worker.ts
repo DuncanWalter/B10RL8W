@@ -1,10 +1,26 @@
+import { trainNewAgent } from './trainAgent'
+
 declare function postMessage(message: string): void
 
 self.onmessage = event => {
   const data = JSON.parse(event.data)
   switch (data.command) {
     case 'train-agent': {
-      postMessage(JSON.stringify({ type: 'done', hash: data.hash }))
+      trainNewAgent({
+        agentType: data.agentType,
+        name: data.agentName,
+        epochs: data.epochs,
+        simplified: data.simplified,
+        emitProgress: snapshot => {
+          postMessage(
+            JSON.stringify({
+              type: 'training-progress',
+              snapshots: [snapshot],
+            }),
+          )
+        },
+      })
+      postMessage(JSON.stringify({ type: 'done' }))
       break
     }
     case 'evaluate-agents': {

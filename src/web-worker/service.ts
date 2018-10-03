@@ -6,7 +6,7 @@ type TrainCommand = {
   simplified: boolean
   onProgress(
     snapshots: {
-      epochs: number
+      epoch: number
       random: Snapshot
       agent: Snapshot
       heuristic: Snapshot
@@ -25,7 +25,7 @@ type Snapshot = {
 type TrainingProgressMessage = {
   type: 'training-progress'
   snapshots: {
-    epochs: number
+    epoch: number
     random: Snapshot
     agent: Snapshot
     heuristic: Snapshot
