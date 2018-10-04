@@ -1,6 +1,7 @@
 import { Agent, interpretHistory, FeedBack } from '.'
 import { playGame, Policy } from '../simulator'
 import { range } from '../utils/range'
+import { mapRow } from '../neural-net/batchMath'
 
 export function evaluateAgent(
   testAgent: Agent<any, any>,
@@ -115,4 +116,88 @@ function variance(vec: number[], _mean?: number) {
     sum += dif * dif
   }
   return sum / vec.length
+}
+
+// function allCombinations<T>(options: T[], tupleLength: number): T[][] {
+//   if (tupleLength > options.length) {
+//     throw new Error(
+//       `Cannot select ${tupleLength}-ary combinations from ${
+//         options.length
+//       } options`,
+//     )
+//   } else if (options.length === tupleLength) {
+//     return [options]
+//   } else {
+//     const [head, ...rest] = options
+//     const a = allCombinations(rest, tupleLength)
+//     const b = allCombinations(options, tupleLength - 1).map(t => [head, ...t])
+//     return [...a, ...b]
+//   }
+// }
+
+function allArrangements<T>(options: T[], arrangementSize: number): T[][] {
+  if (options.length === 0) {
+    throw new Error('Cannot arrange empty combinations')
+  } else if (arrangementSize === 0) {
+    return []
+  } else {
+    return allArrangements(options, arrangementSize - 1).generate(a =>
+      options.map(x => [x, ...a]),
+    )
+  }
+}
+
+function allSame<T>(arr: T[]) {
+  if (arr.length === 0) {
+    return true
+  } else {
+    const item = arr[0]
+    for (let e of arr) {
+      if (e != item) {
+        return false
+      }
+    }
+    return true
+  }
+}
+
+function variadicEval(agents: Agent[], games: number) {
+  return allArrangements(agents, 4)
+    .filter(players => !allSame(players))
+    .map((players, _, { length }) => {
+      const cluster = new Map(
+        players.map(
+          agent =>
+            [
+              agent,
+              {
+                weight,
+                score,
+                performance,
+                varScore,
+                varPerformance,
+              },
+            ] as [Agent, number],
+        ),
+      )
+      for (let i of range(Math.ceil(games / length))) {
+        playGame(players.map(a => a.policy) as any, simplified)
+          .map(interpretHistory)
+          .map(({ score }, i) => ({
+            score,
+            agent: players[i],
+          }))
+          .map(({ agent, score }, _, results) => {
+            const agentCluster = cluster.get(agent)
+            agentCluster.weight += 1
+            agentCluster.score += score
+            agentCluster.performance += results.reduce(/*TODO*/)
+          })
+      }
+      //TODO process the cluster for variances
+      return cluster // TODO clusters will need to be array based, so will need to change
+    })
+    .reduce(() => {
+      // TODO
+    })
 }
