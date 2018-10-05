@@ -1,3 +1,13 @@
+/**
+ * Transforms are the bread and butter of our NNs. In fact, a NN is a thin
+ * facade over the pipe transform, which composes other transforms together.
+ * Most of the transforms are not so fancy- the dense, bias, sigmoid, and relu
+ * transforms all do exactly what you'd expect. Additionally, we have the guard
+ * transform which normalizes net inputs, the split transform which allows
+ * other transforms to be run on different parts of the transform input,
+ * and a few other goodies for conciseness and performance.
+ */
+
 export type UniformTransformation<Trace = number[]> = {
   type: 'uniform'
   serialize(): string
