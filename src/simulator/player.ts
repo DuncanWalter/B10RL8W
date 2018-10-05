@@ -24,6 +24,7 @@ export type History<F = any> =
     }
   | {
       reward: number
+      actor: Player<F>
       terminal: true
     }
 
@@ -60,6 +61,7 @@ export function createPlayer<F>(policy: Policy<F>, hand: Card[]) {
     terminate() {
       history.push({
         reward: pendingReward,
+        actor: this,
         terminal: true,
       })
       pendingReward = 0

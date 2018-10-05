@@ -1,7 +1,7 @@
 import { Policy } from '../simulator/player'
 import { FeedBack } from './history'
 
-export type Agent<F = any> = {
+export type Agent<F = unknown, T = string> = {
   policy: Policy<F>
   train: (
     feedBack: FeedBack<F>[],
@@ -10,6 +10,7 @@ export type Agent<F = any> = {
     stdDevLoss: number
   }
   serialize: () => string
+  type: T
 }
 
 export { FeedBack, interpretHistory } from './history'
