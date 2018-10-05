@@ -5,6 +5,7 @@ import {
   createRandomAgent,
 } from '../agents'
 import { config } from '../config'
+import { evaluateAgents } from '../agents/evaluating'
 
 type TrainingConfiguration = {
   name: string
@@ -51,6 +52,7 @@ export function trainNewAgent({
 
     const [agent, random, heuristic] = evaluateAgents(
       [trainingAgent, randomAgent, heuristicAgent],
+      100,
       simplified,
     )
     emitProgress({
