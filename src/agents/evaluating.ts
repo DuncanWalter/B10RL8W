@@ -3,14 +3,16 @@ import { playGame, Policy } from '../simulator'
 import { range } from '../utils/range'
 
 export function evaluateAgent(
-  testAgent: Agent<any, any, any>,
-  baselineAgent: Agent<any, any, any>,
+  testAgent: Agent<any, any>,
+  baselineAgent: Agent<any, any>,
   simplified: boolean,
   log: (
-    meanScore: number,
-    stdDevScore: number,
-    meanPerformance: number,
-    stdDevPerformance: number,
+    results: {
+      meanScore: number
+      stdDevScore: number
+      meanPerformance: number
+      stdDevPerformance: number
+    },
   ) => void,
   numTrials: number = 100,
 ) {
@@ -32,11 +34,14 @@ export function evaluateAgent(
   }
   const meanScore = mean(allScores)
   const meanPerformance = mean(allPerformances)
-  const stdDevScore = Math.sqrt(variance(allScores, meanScore))
-  const stdDevPerformance = Math.sqrt(
-    variance(allPerformances, meanPerformance),
-  )
-  log(meanScore, stdDevScore, meanPerformance, stdDevPerformance)
+  const stdDevScore = variance(allScores, meanScore) ** 0.5
+  const stdDevPerformance = variance(allPerformances, meanPerformance) ** 0.5
+  log({
+    meanScore,
+    stdDevScore,
+    meanPerformance,
+    stdDevPerformance,
+  })
 }
 
 function playEvaluatingGame(
@@ -50,7 +55,7 @@ function playEvaluatingGame(
     .map(interpretHistory)
     .map(({ score }, i) => ({ score, type: agents[i].type }))
 
-  const scoresByType = results.reduce(
+  const scoresByType = results.reduce<{ [prop: string]: number[] }>(
     (kinds, { score, type }) => {
       if (!(type in kinds)) {
         kinds[type] = []
@@ -58,43 +63,40 @@ function playEvaluatingGame(
       kinds[type].push(score)
       return kinds
     },
-    {} as { [prop: string]: number[] },
+    {},
   )
 
-  const performances = Object.entries(scoresByType).reduce(
-    (perfMap, [type, scores]) => {
-      perfMap[type] = scores.map(score =>
-        Object.entries(scoresByType)
-          .filter(([otherType, otherScores]) => otherType !== type)
-          .reduce(
-            (performance, [otherType, otherScores]) =>
-              otherScores.reduce(
-                (perf, otherScore) =>
-                  perf +
-                  (score > otherScore ? 1 : score === otherScore ? 0 : -1),
-                performance,
-              ),
-            0,
-          ),
-      )
-      return perfMap
-    },
-    {} as { [prop: string]: number[] },
-  )
+  const performances = Object.entries(scoresByType).reduce<{
+    [prop: string]: number[]
+  }>((perfMap, [type, scores]) => {
+    perfMap[type] = scores.map(score =>
+      Object.entries(scoresByType)
+        .filter(([otherType, otherScores]) => otherType !== type)
+        .reduce(
+          (performance, [otherType, otherScores]) =>
+            otherScores.reduce(
+              (perf, otherScore) =>
+                perf + (score > otherScore ? 1 : score === otherScore ? 0 : -1),
+              performance,
+            ),
+          0,
+        ),
+    )
+    return perfMap
+  }, {})
 
-  return Object.keys(scoresByType).reduce(
-    (resultMap, type) => {
-      const avgPerformance =
-        performances[type].reduce((sum, next) => sum + next, 0) /
-        performances[type].length
-      const avgScore =
-        scoresByType[type].reduce((sum, next) => sum + next, 0) /
-        scoresByType[type].length
-      resultMap[type] = { performance: avgPerformance, score: avgScore }
-      return resultMap
-    },
-    {} as { [prop: string]: { performance: number; score: number } },
-  )
+  return Object.keys(scoresByType).reduce<{
+    [prop: string]: { performance: number; score: number }
+  }>((resultMap, type) => {
+    const avgPerformance =
+      performances[type].reduce((sum, next) => sum + next) /
+      performances[type].length
+    const avgScore =
+      scoresByType[type].reduce((sum, next) => sum + next) /
+      scoresByType[type].length
+    resultMap[type] = { performance: avgPerformance, score: avgScore }
+    return resultMap
+  }, {})
 }
 
 function mean(vec: number[]) {

@@ -11,7 +11,7 @@ test('Evaluating a random agents against itself gives a baseline score', () => {
     agent,
     baseline,
     simplified,
-    (meanScore, stdDevScore, meanPerformance, stdDevPerformance) => {
+    ({ meanScore, stdDevScore, meanPerformance, stdDevPerformance }) => {
       expect(Math.abs(meanScore - expectedScore)).toBeLessThanOrEqual(0.2)
     },
   )
