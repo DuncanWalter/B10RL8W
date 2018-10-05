@@ -12,6 +12,11 @@ export type GameSummary<L extends number> = {
   summary(state: State, player: Player, action: Card): Iterable<number>
 }
 
+/** the summary of the hand gives the agent:
+ *  the sum of the all the pips in the hand, 
+ *  the number of cards in the agent's hand, 
+ *  the number of cards in each suit, 
+ *  the minimum and maximum pip for a card in a suit */
 export const handSummary: GameSummary<14> = {
   size: 14,
   summary(state: State, { hand: rawHand }: Player, action: Card) {
@@ -35,6 +40,11 @@ export const handSummary: GameSummary<14> = {
   },
 }
 
+/** the summary of the trick gives the agent: 
+ *  number of points in the trick, 
+ *  number of cards in the trick, 
+ *  whether the considered action would become the trick leader, 
+ *  the maximum number of pips for the leading card in the trick */
 export const trickSummary: GameSummary<4> = {
   size: 4,
   summary({ simplified, trick }: State, player: Player, action: Card) {
@@ -53,6 +63,9 @@ export const trickSummary: GameSummary<4> = {
   },
 }
 
+/** the summary of the action gives the agent: 
+ *  the suit of the card the agent is playing,
+ *  the rank of the card the agent is playing */
 export const actionSummary: GameSummary<5> = {
   size: 5,
   summary(state: State, player: Player, action: Card) {
@@ -65,6 +78,7 @@ export const actionSummary: GameSummary<5> = {
   },
 }
 
+/** join a list of different game summaries */
 export function joinSummaries(
   ...summaries: GameSummary<number>[]
 ): GameSummary<number> {

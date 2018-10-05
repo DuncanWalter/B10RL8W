@@ -19,9 +19,10 @@ export const contextlessSummary = joinSummaries(
   actionSummary,
 )
 
-// TODO lift this into a function that can create agents of any leaning kind
+// TODO lift this into a function that can create agents of any learning kind
 // TODO we need by handing it a gameSummary object.
-export function createContextlessAgent(): Agent<unknown, 'contextless'> {
+export function createContextlessAgent(): Agent<unknown> {
+  // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > 6) {
       return 0.5 * (6 * (Math.abs(a - b) - 6) + 36)

@@ -14,9 +14,9 @@ export type Agent<F = unknown, T = string> = {
   train: (
     feedBack: FeedBack<F>[],
   ) => {
-    meanLoss: number
-    stdDevLoss: number
-  }
+      meanLoss: number
+      stdDevLoss: number
+    }
   serialize: () => string
   type: T
 }
@@ -28,6 +28,8 @@ export { evaluateAgents } from './evaluating'
 
 export { createRandomAgent } from './random'
 export { createContextlessAgent } from './contextless'
+//export { createRuleTrackingAgent } from './ruleTracking'
+
 // TODO:
 // export { createCardCountingAgent } from './cardCounting'
-// export { createRuleTrackingAgent } from './ruleTracking'
+
