@@ -6,6 +6,7 @@ import {
   cardPoints,
   trickWinner,
 } from '../simulator'
+import { playerWithCard } from '../simulator/simulator';
 
 export type GameSummary<L extends number> = {
   size: L
@@ -13,9 +14,9 @@ export type GameSummary<L extends number> = {
 }
 
 /** the summary of the hand gives the agent:
- *  the sum of the all the pips in the hand, 
- *  the number of cards in the agent's hand, 
- *  the number of cards in each suit, 
+ *  the sum of the all the pips in the hand,
+ *  the number of cards in the agent's hand,
+ *  the number of cards in each suit,
  *  the minimum and maximum pip for a card in a suit */
 export const handSummary: GameSummary<14> = {
   size: 14,
@@ -40,10 +41,10 @@ export const handSummary: GameSummary<14> = {
   },
 }
 
-/** the summary of the trick gives the agent: 
- *  number of points in the trick, 
- *  number of cards in the trick, 
- *  whether the considered action would become the trick leader, 
+/** the summary of the trick gives the agent:
+ *  the number of points in the trick,
+ *  the number of cards in the trick,
+ *  whether the considered action would become the trick leader,
  *  the maximum number of pips for the leading card in the trick */
 export const trickSummary: GameSummary<4> = {
   size: 4,
@@ -63,7 +64,7 @@ export const trickSummary: GameSummary<4> = {
   },
 }
 
-/** the summary of the action gives the agent: 
+/** the summary of the action gives the agent:
  *  the suit of the card the agent is playing,
  *  the rank of the card the agent is playing */
 export const actionSummary: GameSummary<5> = {
@@ -76,6 +77,38 @@ export const actionSummary: GameSummary<5> = {
       action.rank,
     ]
   },
+}
+
+/** the summary of the game's points and rules gives the agent: 
+ *  the agent's score,
+ *  the total score,
+ *  whether or not hearts has been broken,
+ *  whether or not the queen is still in the game */
+export const ruleSummary: GameSummary<4> = {
+  size: 4,
+  summary(state: State, player: Player, action: Card) {
+    let totalScore = 0
+    for (let { score } of state.players) {
+      totalScore += score
+    }
+
+    let queenTaken = 1
+    if (!!playerWithCard(state.players, "spades", 12) ||
+      !!(state.trick.cards.find(isQueenOfSpades))) {
+      queenTaken = 0
+    }
+
+    return [
+      player.score,
+      totalScore,
+      state.heartsBroken ? 1 : 0,
+      queenTaken
+    ]
+  }
+}
+
+function isQueenOfSpades(card: Card) {
+  return card.suit === suits["spades"] && card.rank === 12
 }
 
 /** join a list of different game summaries */

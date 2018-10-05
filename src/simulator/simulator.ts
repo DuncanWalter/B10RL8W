@@ -83,7 +83,7 @@ export function trickPoints(
   return cards.reduce((total, card) => total + cardPoints(card, simplified), 0)
 }
 
-function playerWithCard(
+export function playerWithCard(
   players: Player[],
   suit: keyof typeof suits,
   rank: number,
@@ -132,9 +132,9 @@ function playCard(
       player =>
         player === actor
           ? {
-              ...player,
-              hand: player.hand.filter(handCard => handCard !== action),
-            }
+            ...player,
+            hand: player.hand.filter(handCard => handCard !== action),
+          }
           : player,
     ) as [Player, Player, Player, Player],
     trick: {
