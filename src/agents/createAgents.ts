@@ -28,8 +28,7 @@ export const ruleTrackingSummary = joinSummaries(
   ruleSummary,
 )
 
-export function createAgent(agentSummary: GameSummary<number>):
-  Agent<unknown> {
+export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > 6) {
@@ -89,4 +88,3 @@ export function createAgent(agentSummary: GameSummary<number>):
     },
   }
 }
-
