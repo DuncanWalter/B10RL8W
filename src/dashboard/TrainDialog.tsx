@@ -13,14 +13,14 @@ export default class TrainDialog extends React.Component<TrainDialogProps> {
   callTrainAgent() {
     const agentName = 'Fred'
     const agentType = 'contextless'
-    const epochs = 100
+    const epochs = 10
     const onProgress = (
       snapshots: {
-        epochs: number
+        epoch: number
       }[],
     ) => {
       const lastEpoch = snapshots
-        .map(({ epochs }) => epochs)
+        .map(({ epoch }) => epoch)
         .reduce((acc, curr) => (curr > acc ? curr : acc))
       console.log(lastEpoch)
       if (lastEpoch > epochs) {
