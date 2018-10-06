@@ -59,10 +59,10 @@ export function createHeuristicAgent(
         }
       })
     },
-    train(feedBack: any) {
+    train(feedBack: unknown) {
       return {
-        meanLoss: 0,
-        stdDevLoss: 1,
+        meanLoss: NaN,
+        stdDevLoss: NaN,
       }
     },
     serialize() {

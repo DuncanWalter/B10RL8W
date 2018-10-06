@@ -1,13 +1,7 @@
 import { Player, State, Card } from '../simulator'
 import { Agent } from '.'
 
-// // TODO: make an actual prng (or import)
-// function seededRandom(seed: number) {
-//   return Math.random
-// }
-
-export function createRandomAgent(seed: number): Agent<null, 'random'> {
-  // const random = seededRandom(seed)
+export function createRandomAgent(): Agent<null, 'random'> {
   return {
     type: 'random',
     policy(state: State, player: Player, actions: Card[]) {
@@ -17,10 +11,10 @@ export function createRandomAgent(seed: number): Agent<null, 'random'> {
         trace: null,
       }))
     },
-    train(feedBack: any) {
+    train(feedBack: unknown) {
       return {
-        meanLoss: 0,
-        stdDevLoss: 1,
+        meanLoss: NaN,
+        stdDevLoss: NaN,
       }
     },
     serialize() {
