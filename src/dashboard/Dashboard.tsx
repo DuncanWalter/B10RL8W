@@ -12,10 +12,14 @@ import { styles, Classes } from './styles'
 type DashboardState = {
   activeDialog: number
   dialogs: (
-    | { props: TrainDialogProps; type: 'train' }
-    | { props: EvalDialogProps; type: 'eval' }
-    | { props: ResultDialogProps; type: 'result' }
+    | { props: TrainDialogProps; type: 'train'; index: number }
+    | { props: EvalDialogProps; type: 'eval'; index: number }
+    | { props: ResultDialogProps; type: 'result'; index: number }
     | { props: WelcomeDialogProps; type: 'welcome' })[]
+  numDialogs: {
+    evaluate: number
+    train: number
+  }
   // map of trained agents by 'id'
   // map of results by ['id1', 'id2', 'id3', 'id4']
 }
@@ -36,26 +40,44 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
           },
         },
       ],
+      numDialogs: {
+        evaluate: 0,
+        train: 0,
+      },
     }
   }
 
   createNewTrainDialog = () => {
-    const { dialogs } = this.state
+    const {
+      dialogs,
+      numDialogs: { evaluate, train },
+    } = this.state
     const props = {}
     const activeDialog = dialogs.length
     this.setState({
       activeDialog,
-      dialogs: dialogs.concat([{ type: 'train', props }]),
+      dialogs: dialogs.concat([{ type: 'train', index: train, props }]),
+      numDialogs: {
+        evaluate,
+        train: train + 1,
+      },
     })
   }
 
   createNewEvalDialog = () => {
-    const { dialogs } = this.state
+    const {
+      dialogs,
+      numDialogs: { evaluate, train },
+    } = this.state
     const props = {}
     const activeDialog = dialogs.length
     this.setState({
       activeDialog,
-      dialogs: dialogs.concat([{ type: 'eval', props }]),
+      dialogs: dialogs.concat([{ type: 'eval', index: evaluate, props }]),
+      numDialogs: {
+        evaluate: evaluate + 1,
+        train,
+      },
     })
   }
 
@@ -77,18 +99,25 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
   }
 
   renderNavBar() {
-    const items = this.state.dialogs.map(({ type }, i) => {
-      const description = `${type} (${i})`
+    const items = this.state.dialogs.map((dialog, i) => {
+      const description =
+        dialog.type === 'welcome'
+          ? 'Welcome!'
+          : `${dialog.type} (${dialog.index})`
       const onClick = () => this.switchDialog(i)
-      return { description, onClick }
+      const hasDivider =
+        dialog.type === 'welcome' || i === this.state.dialogs.length - 1
+      return { description, onClick, hasDivider }
     })
     const addTrainDialogItem = {
       description: 'Train New Agent',
       onClick: this.createNewTrainDialog,
+      hasDivider: false,
     }
     const addEvalDialogItem = {
       description: 'Evaluate New Set of Agents',
       onClick: this.createNewEvalDialog,
+      hasDivider: false,
     }
     items.push(addTrainDialogItem)
     items.push(addEvalDialogItem)

@@ -4,10 +4,12 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Card from './Card'
 import CardContent from './CardContent'
+import { Divider } from '@material-ui/core'
 
 type NavBarEntry = {
   description: string
   onClick: () => void
+  hasDivider: boolean
 }
 
 export type NavBarProps = {
@@ -17,13 +19,17 @@ export type NavBarProps = {
 export default class NavBar extends React.Component<NavBarProps> {
   render() {
     const { entries } = this.props
-    const elements = entries.map(({ description, onClick }) => (
-      <div>
-        <ListItem button onClick={onClick}>
-          <ListItemText>{description}</ListItemText>
-        </ListItem>
-      </div>
-    ))
+    const elements = entries.map(({ description, onClick, hasDivider }) => {
+      const divider = hasDivider ? <Divider /> : undefined
+      return (
+        <div>
+          <ListItem button onClick={onClick}>
+            <ListItemText>{description}</ListItemText>
+          </ListItem>
+          {divider}
+        </div>
+      )
+    })
     return (
       <Card style={{ minWidth: '280px' }}>
         <CardContent style={{ padding: '24px 0 24px' }}>
