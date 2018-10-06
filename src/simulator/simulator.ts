@@ -132,9 +132,9 @@ function playCard(
       player =>
         player === actor
           ? {
-            ...player,
-            hand: player.hand.filter(handCard => handCard !== action),
-          }
+              ...player,
+              hand: player.hand.filter(handCard => handCard !== action),
+            }
           : player,
     ) as [Player, Player, Player, Player],
     trick: {

@@ -6,7 +6,7 @@ import {
   cardPoints,
   trickWinner,
 } from '../simulator'
-import { playerWithCard } from '../simulator/simulator';
+import { playerWithCard } from '../simulator/simulator'
 
 export type GameSummary<L extends number> = {
   size: L
@@ -79,7 +79,7 @@ export const actionSummary: GameSummary<5> = {
   },
 }
 
-/** the summary of the game's points and rules gives the agent: 
+/** the summary of the game's points and rules gives the agent:
  *  the agent's score,
  *  the total score,
  *  whether or not hearts has been broken,
@@ -93,22 +93,19 @@ export const ruleSummary: GameSummary<4> = {
     }
 
     let queenTaken = 1
-    if (!!playerWithCard(state.players, "spades", 12) ||
-      !!(state.trick.cards.find(isQueenOfSpades))) {
+    if (
+      !!playerWithCard(state.players, 'spades', 12) ||
+      !!state.trick.cards.find(isQueenOfSpades)
+    ) {
       queenTaken = 0
     }
 
-    return [
-      player.score,
-      totalScore,
-      state.heartsBroken ? 1 : 0,
-      queenTaken
-    ]
-  }
+    return [player.score, totalScore, state.heartsBroken ? 1 : 0, queenTaken]
+  },
 }
 
 function isQueenOfSpades(card: Card) {
-  return card.suit === suits["spades"] && card.rank === 12
+  return card.suit === suits['spades'] && card.rank === 12
 }
 
 /** join a list of different game summaries */
