@@ -105,19 +105,19 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
           ? 'Welcome!'
           : `${dialog.type} (${dialog.index})`
       const onClick = () => this.switchDialog(i)
-      const hasDivider =
-        dialog.type === 'welcome' || i === this.state.dialogs.length - 1
-      return { description, onClick, hasDivider }
+      const key =
+        `${dialog.type}` + (dialog.type === 'welcome' ? '' : `-${dialog.index}`)
+      return { description, onClick, key }
     })
     const addTrainDialogItem = {
       description: 'Train New Agent',
       onClick: this.createNewTrainDialog,
-      hasDivider: false,
+      key: 'newTrain',
     }
     const addEvalDialogItem = {
       description: 'Evaluate New Set of Agents',
       onClick: this.createNewEvalDialog,
-      hasDivider: false,
+      key: 'newEval',
     }
     items.push(addTrainDialogItem)
     items.push(addEvalDialogItem)
@@ -162,7 +162,6 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
       <div className={classes.root}>
         <div className={classes.split}>
           <div style={{ flexGrow: 0 }}>{this.renderNavBar()}</div>
-
           <div style={{ flexGrow: 1 }}>{this.renderDialog(activeDialog)}</div>
         </div>
       </div>

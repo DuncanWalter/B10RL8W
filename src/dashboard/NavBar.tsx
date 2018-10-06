@@ -8,8 +8,8 @@ import { Divider } from '@material-ui/core'
 
 type NavBarEntry = {
   description: string
+  key: string
   onClick: () => void
-  hasDivider: boolean
 }
 
 export type NavBarProps = {
@@ -19,15 +19,11 @@ export type NavBarProps = {
 export default class NavBar extends React.Component<NavBarProps> {
   render() {
     const { entries } = this.props
-    const elements = entries.map(({ description, onClick, hasDivider }) => {
-      const divider = hasDivider ? <Divider /> : undefined
+    const elements = entries.map(({ description, onClick, key }) => {
       return (
-        <div>
-          <ListItem button onClick={onClick}>
-            <ListItemText>{description}</ListItemText>
-          </ListItem>
-          {divider}
-        </div>
+        <ListItem button onClick={onClick} key={key}>
+          <ListItemText>{description}</ListItemText>
+        </ListItem>
       )
     })
     return (
