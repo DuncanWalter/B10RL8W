@@ -27,7 +27,7 @@ export function trickWinner({ suit, cards }: Trick): Card | null {
   return cards.reduce((winner: null | Card, card?: Card) => {
     if (
       card !== undefined &&
-      card.suit === suit &&
+      (card.suit === suit || suit === null) &&
       (winner === null || card.rank > winner.rank)
     ) {
       return card
@@ -189,7 +189,7 @@ function playRound(startState: State): State {
   if (cardIndex === -1) {
     throw new Error('Trick winning card was not found in trick')
   }
-  const winningSeat = ((cardIndex + 4 - trickLeader) % 4) as 0 | 1 | 2 | 3
+  const winningSeat = ((cardIndex + trickLeader) % 4) as 0 | 1 | 2 | 3
   const winningPlayer = players[winningSeat]
   if (winningPlayer === undefined) {
     throw new Error(

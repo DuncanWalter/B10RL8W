@@ -114,13 +114,13 @@ test('Legal moves are correctly identified', () => {
 })
 
 test('Plays a game and produces agent histories', () => {
-  const { policy } = createRandomAgent(1234)
+  const { policy } = createRandomAgent()
   const history = playGame([policy, policy, policy, policy], false)
   expect(history.length).toEqual(4)
 })
 
 test('Plays a game and interprets the agent histories into training data', () => {
-  const { policy } = createRandomAgent(1234)
+  const { policy } = createRandomAgent()
   const trainingData = playGame([policy, policy, policy, policy], false)
     .map(interpretHistory)
     .reduce(
