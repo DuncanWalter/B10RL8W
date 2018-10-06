@@ -65,7 +65,7 @@ function createEvaluationCluster(
         agentTrace.scores.push(score)
         agentTrace.performances.push(
           results.reduce((p, { agent: a, score: s }) => {
-            return a === agent || s === score ? p : s > score ? p - 1 : p + 1
+            return a === agent || s === score ? p : s > score ? p + 1 : p - 1
           }, 0),
         )
       })

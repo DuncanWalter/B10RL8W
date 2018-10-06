@@ -1,13 +1,14 @@
 import { evaluateAgents } from './evaluating'
 import { createRandomAgent } from './random'
+import { createHeuristicAgent } from './heuristic'
 
 test('Evaluating a random agents gives a baseline score', () => {
-  let agent = createRandomAgent(2527)
-  let baseline = createRandomAgent(33333)
+  let randy = createRandomAgent(2527)
+  let hugo = createHeuristicAgent(false)
   const simplified = false
   const expectedScore = simplified ? 3.25 : 6.5
   const [{ meanScore: a }, { meanScore: b }] = evaluateAgents(
-    [agent, baseline],
+    [randy, hugo],
     100,
     simplified,
   )

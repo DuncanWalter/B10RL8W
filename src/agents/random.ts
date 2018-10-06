@@ -1,19 +1,19 @@
 import { Player, State, Card } from '../simulator'
 import { Agent } from '.'
 
-// TODO: make an actual prng (or import)
-function seededRandom(seed: number) {
-  return Math.random
-}
+// // TODO: make an actual prng (or import)
+// function seededRandom(seed: number) {
+//   return Math.random
+// }
 
 export function createRandomAgent(seed: number): Agent<null, 'random'> {
-  const random = seededRandom(seed)
+  // const random = seededRandom(seed)
   return {
     type: 'random',
     policy(state: State, player: Player, actions: Card[]) {
-      return actions.map(action => ({
+      return actions.map((action, index) => ({
         action,
-        quality: random(),
+        quality: index,
         trace: null,
       }))
     },
