@@ -11,5 +11,5 @@ test('Evaluating a random agents gives a baseline score', () => {
     100,
     simplified,
   )
-  expect(a + b - 2 * expectedScore).toBeLessThanOrEqual(0.002)
+  expect(Math.abs(a + b - 2 * expectedScore)).toBeLessThanOrEqual(0.002)
 })
