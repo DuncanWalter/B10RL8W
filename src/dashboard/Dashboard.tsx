@@ -1,42 +1,30 @@
 import React from 'react'
-import Card from '@material-ui/core/Card'
+
 import { withStyles } from '@material-ui/core/styles'
 
-import { NavBar } from './NavBar'
+import NavBar from './NavBar'
 import TrainDialog, { TrainDialogProps } from './TrainDialog'
 import EvalDialog, { EvalDialogProps } from './EvalDialog'
 import ResultDialog, { ResultDialogProps } from './ResultDialog'
 import WelcomeDialog, { WelcomeDialogProps } from './WelcomeDialog'
-
-type DashboardProps = {
-  classes: { [K in keyof typeof styles]: string }
-}
+import { styles, Classes } from './styles'
 
 type DashboardState = {
   activeDialog: number
   dialogs: (
-    | { props: TrainDialogProps; type: 'train' }
-    | { props: EvalDialogProps; type: 'eval' }
-    | { props: ResultDialogProps; type: 'result' }
+    | { props: TrainDialogProps; type: 'train'; index: number }
+    | { props: EvalDialogProps; type: 'eval'; index: number }
+    | { props: ResultDialogProps; type: 'result'; index: number }
     | { props: WelcomeDialogProps; type: 'welcome' })[]
+  numDialogs: {
+    evaluate: number
+    train: number
+  }
   // map of trained agents by 'id'
   // map of results by ['id1', 'id2', 'id3', 'id4']
 }
 
-const styles = {
-  padded: {
-    padding: '24px',
-  },
-  card: {
-    margin: '12px',
-  },
-  cardHeader: {
-    padding: '24px',
-  },
-  cardContent: {
-    padding: '0 24px 24px',
-  },
-}
+export type DashboardProps = { classes: Classes }
 
 class Dashboard extends React.Component<DashboardProps, DashboardState> {
   constructor(props: DashboardProps) {
@@ -52,19 +40,91 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
           },
         },
       ],
+      numDialogs: {
+        evaluate: 0,
+        train: 0,
+      },
     }
   }
 
+  createNewTrainDialog = () => {
+    const {
+      dialogs,
+      numDialogs: { evaluate, train },
+    } = this.state
+    const props = {}
+    const activeDialog = dialogs.length
+    this.setState({
+      activeDialog,
+      dialogs: dialogs.concat([{ type: 'train', index: train, props }]),
+      numDialogs: {
+        evaluate,
+        train: train + 1,
+      },
+    })
+  }
+
+  createNewEvalDialog = () => {
+    const {
+      dialogs,
+      numDialogs: { evaluate, train },
+    } = this.state
+    const props = {}
+    const activeDialog = dialogs.length
+    this.setState({
+      activeDialog,
+      dialogs: dialogs.concat([{ type: 'eval', index: evaluate, props }]),
+      numDialogs: {
+        evaluate: evaluate + 1,
+        train,
+      },
+    })
+  }
+
+  switchDialog = (index: number) => {
+    const { dialogs } = this.state
+    this.setState({
+      activeDialog: index,
+      dialogs,
+    })
+  }
+
+  deleteDialog = (index: number) => {
+    const { dialogs } = this.state
+    dialogs.splice(index, 1)
+    this.setState({
+      activeDialog: 0,
+      dialogs,
+    })
+  }
+
   renderNavBar() {
-    const items = [
-      { description: 'Hello there', onClick: () => {} },
-      { description: 'General Kenobi', onClick: () => {} },
-    ]
+    const items = this.state.dialogs.map((dialog, i) => {
+      const description =
+        dialog.type === 'welcome'
+          ? 'Welcome!'
+          : `${dialog.type} (${dialog.index})`
+      const onClick = () => this.switchDialog(i)
+      const key =
+        `${dialog.type}` + (dialog.type === 'welcome' ? '' : `-${dialog.index}`)
+      return { description, onClick, key }
+    })
+    const addTrainDialogItem = {
+      description: 'Train New Agent',
+      onClick: this.createNewTrainDialog,
+      key: 'newTrain',
+    }
+    const addEvalDialogItem = {
+      description: 'Evaluate New Set of Agents',
+      onClick: this.createNewEvalDialog,
+      key: 'newEval',
+    }
+    items.push(addTrainDialogItem)
+    items.push(addEvalDialogItem)
     return <NavBar entries={items} />
   }
 
   renderDialog(index: number) {
-    const { classes } = this.props
     const dialogProps = this.state.dialogs[index]
 
     let dialog
@@ -92,17 +152,19 @@ class Dashboard extends React.Component<DashboardProps, DashboardState> {
       }
     }
 
-    return <Card className={classes.card}>{dialog}</Card>
+    return dialog
   }
 
   render() {
     const { classes } = this.props
     const { activeDialog } = this.state
     return (
-      <Card className={classes.card}>
-        {this.renderNavBar()}
-        {this.renderDialog(activeDialog)}
-      </Card>
+      <div className={classes.root}>
+        <div className={classes.split}>
+          <div style={{ flexGrow: 0 }}>{this.renderNavBar()}</div>
+          <div style={{ flexGrow: 1 }}>{this.renderDialog(activeDialog)}</div>
+        </div>
+      </div>
     )
   }
 }
