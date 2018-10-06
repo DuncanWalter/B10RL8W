@@ -1,118 +1,148 @@
-import { Agent, interpretHistory, FeedBack } from '.'
-import { playGame, Policy } from '../simulator'
+import { Agent, interpretHistory } from '.'
+import { playGame } from '../simulator'
 import { range } from '../utils/range'
 
-export function evaluateAgent(
-  testAgent: Agent<any, any>,
-  baselineAgent: Agent<any, any>,
-  simplified: boolean,
-  log: (
-    results: {
-      meanScore: number
-      stdDevScore: number
-      meanPerformance: number
-      stdDevPerformance: number
-    },
-  ) => void,
-  numTrials: number = 100,
-) {
-  const testType = testAgent.type
-  const indicesCombinations = [[0], [0, 1], [0, 2], [0, 1, 2]]
-  const allScores: number[] = []
-  const allPerformances: number[] = []
-  for (let _ of range(numTrials)) {
-    const results = indicesCombinations.map(indices => {
-      const agents = [0, 1, 2, 3].map(
-        i => (indices.includes(i) ? testAgent : baselineAgent),
-      )
-      return playEvaluatingGame(agents, simplified)
-    })
-    results.filter(result => testType in result).forEach(result => {
-      allScores.push(result[testType].score)
-      allPerformances.push(result[testType].performance)
-    })
-  }
-  const meanScore = mean(allScores)
-  const meanPerformance = mean(allPerformances)
-  const stdDevScore = variance(allScores, meanScore) ** 0.5
-  const stdDevPerformance = variance(allPerformances, meanPerformance) ** 0.5
-  log({
-    meanScore,
-    stdDevScore,
-    meanPerformance,
-    stdDevPerformance,
-  })
+type EvaluationTrace = {
+  weight: number
+  scores: number[]
+  performances: number[]
+}
+type Evaluation = {
+  weight: number
+  meanScore: number
+  varScore: number
+  meanPerformance: number
+  varPerformance: number
+}
+type TraceCluster = Map<Agent, EvaluationTrace>
+type EvaluationCluster = Map<Agent, Evaluation>
+
+function createTraceCluster(agents: Agent[]): TraceCluster {
+  const traceCluster = new Map()
+  agents.forEach(agent =>
+    traceCluster.set(agent, { weight: 0, scores: [], performances: [] }),
+  )
+  return traceCluster
 }
 
-function playEvaluatingGame(
+function interpretTraceCluster(traceCluster: TraceCluster): EvaluationCluster {
+  const evalCluster = new Map()
+  ;[...traceCluster].forEach(([agent, { weight, scores, performances }]) => {
+    const meanScore = scores.reduce((a, b) => a + b)
+    const varScore = scores.reduce(
+      (a, b) => a + (b - meanScore / weight) ** 2,
+      0,
+    )
+    const meanPerformance = performances.reduce((a, b) => a + b)
+    const varPerformance = performances.reduce(
+      (a, b) => a + (b - meanPerformance / weight) ** 2,
+      0,
+    )
+    evalCluster.set(agent, {
+      weight,
+      meanScore,
+      varScore,
+      meanPerformance,
+      varPerformance,
+    })
+  })
+  return evalCluster
+}
+
+function createEvaluationCluster(
   agents: Agent[],
+  weight: number,
   simplified: boolean,
-): { [type: string]: { performance: number; score: number } } {
-  const results = playGame(
-    agents.map(({ policy }) => policy) as [Policy, Policy, Policy, Policy],
-    simplified,
-  )
-    .map(interpretHistory)
-    .map(({ score }, i) => ({ score, type: agents[i].type }))
+): EvaluationCluster {
+  const traceCluster = createTraceCluster(agents)
+  for (let i of range(weight)) {
+    playGame(agents.map(a => a.policy) as any, simplified)
+      .map(interpretHistory)
+      .map(({ score }, i) => ({ score, agent: agents[i] }))
+      .forEach(({ agent, score }, _, results) => {
+        const agentTrace = traceCluster.get(agent)!
+        agentTrace.weight += 1
+        agentTrace.scores.push(score)
+        agentTrace.performances.push(
+          results.reduce((p, { agent: a, score: s }) => {
+            return a === agent || s === score ? p : s > score ? p - 1 : p + 1
+          }, 0),
+        )
+      })
+  }
+  return interpretTraceCluster(traceCluster)
+}
 
-  const scoresByType = results.reduce<{ [prop: string]: number[] }>(
-    (kinds, { score, type }) => {
-      if (!(type in kinds)) {
-        kinds[type] = []
+function allArrangements<T>(options: T[], arrangementSize: number): T[][] {
+  if (options.length === 0) {
+    throw new Error('Cannot arrange empty combinations')
+  } else if (arrangementSize === 0) {
+    return [[]]
+  } else {
+    return allArrangements(options, arrangementSize - 1).generate(a =>
+      options.map(x => [x, ...a]),
+    )
+  }
+}
+
+function allSame<T>(arr: T[]) {
+  if (arr.length === 0) {
+    return true
+  } else {
+    const item = arr[0]
+    for (let e of arr) {
+      if (e != item) {
+        return false
       }
-      kinds[type].push(score)
-      return kinds
-    },
-    {},
-  )
+    }
+    return true
+  }
+}
 
-  const performances = Object.entries(scoresByType).reduce<{
-    [prop: string]: number[]
-  }>((perfMap, [type, scores]) => {
-    perfMap[type] = scores.map(score =>
-      Object.entries(scoresByType)
-        .filter(([otherType, otherScores]) => otherType !== type)
-        .reduce(
-          (performance, [otherType, otherScores]) =>
-            otherScores.reduce(
-              (perf, otherScore) =>
-                perf + (score > otherScore ? 1 : score === otherScore ? 0 : -1),
-              performance,
-            ),
-          0,
+export function evaluateAgents(
+  agents: Agent<any>[],
+  games: number,
+  simplified: boolean,
+) {
+  const clusters = allArrangements(agents, 4)
+    .filter(agents => !allSame(agents))
+    .map((agents, _, { length }) => {
+      return createEvaluationCluster(
+        agents,
+        Math.ceil(games / length),
+        simplified,
+      )
+    })
+
+  return agents
+    .map(agent =>
+      clusters
+        .map(cluster => cluster.get(agent)!)
+        .filter(x => !!x)
+        .reduce<Evaluation>(
+          (globalEval, clusterEval) => {
+            globalEval.weight += clusterEval.weight
+            globalEval.meanScore += clusterEval.meanScore
+            globalEval.varScore += clusterEval.varScore
+            globalEval.meanPerformance += clusterEval.meanPerformance
+            globalEval.varPerformance += clusterEval.varPerformance
+            return globalEval
+          },
+          {
+            weight: 0,
+            meanScore: 0,
+            varScore: 0,
+            meanPerformance: 0,
+            varPerformance: 0,
+          },
         ),
     )
-    return perfMap
-  }, {})
-
-  return Object.keys(scoresByType).reduce<{
-    [prop: string]: { performance: number; score: number }
-  }>((resultMap, type) => {
-    const avgPerformance =
-      performances[type].reduce((sum, next) => sum + next) /
-      performances[type].length
-    const avgScore =
-      scoresByType[type].reduce((sum, next) => sum + next) /
-      scoresByType[type].length
-    resultMap[type] = { performance: avgPerformance, score: avgScore }
-    return resultMap
-  }, {})
-}
-
-function mean(vec: number[]) {
-  let sum = 0
-  for (let i = 0; i < vec.length; i++) {
-    sum += vec[i]
-  }
-  return sum / vec.length
-}
-
-function variance(vec: number[], _mean?: number) {
-  const mu = _mean === undefined ? mean(vec) : _mean
-  let sum = 0
-  for (let i = 0; i < vec.length; i++) {
-    const dif = vec[i] - mu
-    sum += dif * dif
-  }
-  return sum / vec.length
+    .map(
+      ({ weight, meanScore, varScore, meanPerformance, varPerformance }) => ({
+        meanScore: meanScore / weight,
+        stdDevScore: (varScore / weight) ** 0.5,
+        meanPerformance: meanPerformance / weight,
+        stdDevPerformance: (varPerformance / weight) ** 0.5,
+      }),
+    )
 }

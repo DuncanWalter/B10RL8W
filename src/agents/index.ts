@@ -16,6 +16,7 @@ export type Agent<F = unknown, T = string> = {
 export { FeedBack, interpretHistory } from './history'
 
 export { trainAgent } from './training'
+export { evaluateAgents } from './evaluating'
 
 export { createRandomAgent } from './random'
 export { createContextlessAgent } from './contextless'
