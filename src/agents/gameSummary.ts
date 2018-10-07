@@ -100,12 +100,41 @@ export const ruleSummary: GameSummary<4> = {
       queenTaken = 0
     }
 
-    return [player.score, totalScore, state.heartsBroken ? 1 : 0, queenTaken]
+    let haveQueen = 0;
+    player.hand.forEach(card => {
+      if (isQueenOfSpades(card)) {
+        haveQueen = 1
+      }
+    });
+
+    return [player.score, totalScore, state.heartsBroken ? 1 : 0,
+      queenTaken, haveQueen]
   },
 }
 
 function isQueenOfSpades(card: Card) {
   return card.suit === suits['spades'] && card.rank === 12
+}
+
+/** keeps track of the cards that have not yet been played
+ *  (still in someone's hand) */
+export const cardSummary: GameSummary<52> = {
+  size: 52,
+  summary(state: State, player: Player, action: Card) {
+
+    const [hearts, spades, clubs, diamonds] = [0, 1, 2, 3].map(suit => {
+      var ranks = new Array(14).fill(false);
+      state.players.forEach(agent => {
+        agent.hand.forEach(card => {
+          if (card.suit === suit) {
+            ranks[card.rank - 2] = true //lowest rank is 2 so subtract 2
+          }
+        })
+      })
+      return ranks
+    })
+    return [...hearts, ...spades, ...clubs, ...diamonds]
+  },
 }
 
 /** join a list of different game summaries */

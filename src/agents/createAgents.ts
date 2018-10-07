@@ -12,6 +12,7 @@ import {
   trickSummary,
   actionSummary,
   ruleSummary,
+  cardSummary,
   GameSummary,
 } from './gameSummary'
 
@@ -26,6 +27,13 @@ export const ruleTrackingSummary = joinSummaries(
   trickSummary,
   actionSummary,
   ruleSummary,
+)
+
+export const cardCountingSummary = joinSummaries(
+  handSummary,
+  trickSummary,
+  actionSummary,
+  cardSummary,
 )
 
 export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
