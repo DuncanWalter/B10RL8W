@@ -45,9 +45,10 @@ export const handSummary: GameSummary<14> = {
  *  the number of points in the trick,
  *  the number of cards in the trick,
  *  whether the considered action would become the trick leader,
- *  the maximum number of pips for the leading card in the trick */
-export const trickSummary: GameSummary<4> = {
-  size: 4,
+ *  the maximum number of pips for the leading card in the trick
+ *  whether the trick is empty*/
+export const trickSummary: GameSummary<5> = {
+  size: 5,
   summary({ simplified, trick }: State, player: Player, action: Card) {
     const trickWithAction = [action, ...trick.cards]
     const points = trickWithAction.reduce(
@@ -60,7 +61,8 @@ export const trickSummary: GameSummary<4> = {
         ? 1
         : 0
     const trickRank = (trickWinner(trick) || { rank: 0 }).rank
-    return [points, cards, takesTrick, trickRank]
+    const trickIsEmpty = trick.cards.length === 0 ? 1 : 0
+    return [points, cards, takesTrick, trickRank, trickIsEmpty]
   },
 }
 
@@ -83,7 +85,7 @@ export const actionSummary: GameSummary<5> = {
  *  the agent's score,
  *  the total score,
  *  whether or not hearts has been broken,
- *  whether or not the queen is still in the game 
+ *  whether or not the queen is still in the game
  *  whether or not the agent has the queen */
 export const ruleSummary: GameSummary<5> = {
   size: 5,
