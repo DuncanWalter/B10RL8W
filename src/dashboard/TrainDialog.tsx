@@ -52,7 +52,9 @@ export default class TrainDialog extends React.Component<
   render() {
     const { epoch, doneTraining } = this.state
     const doneMessage = doneTraining ? (
-      <Typography variant="body1">We have completed training!</Typography>
+      <CardContent>
+        <Typography variant="body1">We have completed training!</Typography>
+      </CardContent>
     ) : (
       undefined
     )
@@ -62,12 +64,10 @@ export default class TrainDialog extends React.Component<
         <CardContent>
           <Typography variant="body1">Current epoch number: {epoch}</Typography>
         </CardContent>
-        <CardContent>{doneMessage}</CardContent>
-        <CardContent style={{ display: 'flex', justifyContent: 'flex' }}>
-          <Button text="Train Agent" onClick={this.callTrainAgent} />
-        </CardContent>
+        {doneMessage}
         <CardContent style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button text="Dismiss" />
+          <Button text="Train Agent" onClick={this.callTrainAgent} />
         </CardContent>
       </Card>
     )

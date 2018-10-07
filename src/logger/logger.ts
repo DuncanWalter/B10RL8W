@@ -200,7 +200,10 @@ async function requestLogDelete(ctx: Koa.Context, session: string) {
   }
 }
 app.use(async (ctx, next) => {
-  ctx.set('Access-Control-Allow-Origin', `http://localhost:${config.client}`)
+  ctx.set(
+    'Access-Control-Allow-Origin',
+    `http://localhost:${config.clientPort}`,
+  )
   ctx.set(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept',

@@ -1,5 +1,5 @@
 export const config = {
-  port: 1233,
-  client: 1234,
-  test: 8378,
+  loggerPort: 1233,
+  clientPort: 1234,
+  testPort: 8378,
 }

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Central impl repository for our RL project",
   "main": "index.js",
-  "browserslist": "last 1 Chrome versions",
   "scripts": {
     "precommit": "npm run test && pretty-quick",
     "dev": "node ./main.js",
@@ -31,6 +30,7 @@
       "js"
     ]
   },
+  "browserslist": "last 1 Chrome versions",
   "prettier": {
     "semi": false,
     "singleQuote": true,

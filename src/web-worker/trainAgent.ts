@@ -66,7 +66,9 @@ export function trainNewAgent({
     if (epoch === epochs - 1) {
       fetch(
         new Request(
-          `http://localhost:${config.port}/log/${encodeURIComponent(name)}`,
+          `http://localhost:${config.loggerPort}/log/${encodeURIComponent(
+            name,
+          )}`,
           {
             method: 'POST',
             headers: {

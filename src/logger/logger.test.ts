@@ -4,7 +4,7 @@ import { GETLogsResponse, LogUpdate, GETLogResponse } from './types'
 import { unwrapStream } from '../utils/streamUtils'
 import { config } from '../config'
 
-const port = config.test
+const port = config.testPort
 
 function requestOptions(path: string, method: string) {
   return {
