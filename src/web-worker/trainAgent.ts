@@ -6,6 +6,7 @@ import {
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
+import { createHeuristicAgent } from '../agents/heuristic'
 
 type TrainingConfiguration = {
   name: string
@@ -43,27 +44,26 @@ export function trainNewAgent({
   let additionalEpochsTrained = 0
 
   let randomAgent = createRandomAgent()
-  // TODO:
-  let heuristicAgent = createRandomAgent()
+  let heuristicAgent = createHeuristicAgent(simplified)
 
   trainAgent(trainingAgent, epochs, simplified, epoch => {
-    // TODO keep track of agent epochs for logging,
-    // TODO occasionally log, and run evaluations
-
-    const [agent, random, heuristic] = evaluateAgents(
-      [trainingAgent, randomAgent, heuristicAgent],
-      100,
-      simplified,
-    )
-    emitProgress({
-      epoch,
-      agent,
-      random,
-      heuristic,
-    })
-
     additionalEpochsTrained += 1
-    if (epoch === epochs - 1) {
+
+    if (epoch === 0 || epoch % 5 === 4 || epoch === epochs - 1) {
+      const [agent, random, heuristic] = evaluateAgents(
+        [trainingAgent, randomAgent, heuristicAgent],
+        150,
+        simplified,
+      )
+      emitProgress({
+        epoch: epoch + 1,
+        agent,
+        random,
+        heuristic,
+      })
+    }
+
+    if (epoch === 0 || epoch === epochs - 1) {
       fetch(
         new Request(
           `http://localhost:${config.loggerPort}/log/${encodeURIComponent(

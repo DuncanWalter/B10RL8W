@@ -30,23 +30,20 @@ export default class TrainDialog extends React.Component<
     const agentName = 'Fred'
     const agentType = 'contextless'
     const epochs = 10
-    const onProgress = this.trainingCallback(epochs)
+    const onProgress = this.trainingCallback
     const simplified = true
-    trainAgent({ agentName, agentType, epochs, onProgress, simplified })
+    trainAgent({ agentName, agentType, epochs, onProgress, simplified }).then(
+      () => {
+        this.setState({ doneTraining: true })
+      },
+    )
   }
 
-  trainingCallback = (epochs: number) => {
-    return (
-      snapshots: {
-        epoch: number
-      }[],
-    ) => {
-      const lastEpoch = snapshots
-        .map(({ epoch }) => epoch)
-        .reduce((acc, curr) => (curr > acc ? curr : acc))
-      const doneTraining = lastEpoch === epochs - 1
-      this.setState({ epoch: lastEpoch, doneTraining })
-    }
+  trainingCallback = (snapshots: { epoch: number }[]) => {
+    const lastEpoch = snapshots
+      .map(({ epoch }) => epoch)
+      .reduce((acc, curr) => (curr > acc ? curr : acc))
+    this.setState({ epoch: lastEpoch })
   }
 
   render() {
