@@ -43,7 +43,6 @@ export function trainAgent({
   onProgress,
   simplified,
 }: TrainCommand): Promise<void> {
-  console.log('Received call to trainAgent')
   return new Promise(resolve => {
     const worker = new Worker(script)
     worker.onerror = () => {
@@ -53,12 +52,10 @@ export function trainAgent({
       const message: TrainingProgressMessage | DoneMessage = JSON.parse(data)
       switch (message.type) {
         case 'training-progress': {
-          console.log('calling onProgress')
           onProgress(message.snapshots)
           return
         }
         case 'done': {
-          console.log('calling resolve')
           resolve()
           return
         }

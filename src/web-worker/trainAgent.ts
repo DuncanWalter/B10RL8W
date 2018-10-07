@@ -69,7 +69,6 @@ export function trainNewAgent({
           `http://localhost:${config.port}/log/${encodeURIComponent(name)}`,
           {
             method: 'POST',
-            // mode: 'no-cors',
             headers: {
               'content-type': 'text/json',
             },

@@ -5,16 +5,38 @@ import CardHeader from './CardHeader'
 import CardContent from './CardContent'
 import Typography from '@material-ui/core/Typography'
 import Button from './Button'
-import { maxSatisfying } from 'semver'
 
 export type TrainDialogProps = any
 
-export default class TrainDialog extends React.Component<TrainDialogProps> {
-  callTrainAgent() {
+// TODO this will get moved to the results/eval dialog later
+type TrainDialogState = {
+  epoch: number
+  doneTraining: boolean
+}
+
+export default class TrainDialog extends React.Component<
+  TrainDialogProps,
+  TrainDialogState
+> {
+  constructor(props: TrainDialogProps) {
+    super(props)
+    this.state = {
+      epoch: 0,
+      doneTraining: false,
+    }
+  }
+
+  callTrainAgent = () => {
     const agentName = 'Fred'
     const agentType = 'contextless'
     const epochs = 10
-    const onProgress = (
+    const onProgress = this.trainingCallback(epochs)
+    const simplified = true
+    trainAgent({ agentName, agentType, epochs, onProgress, simplified })
+  }
+
+  trainingCallback = (epochs: number) => {
+    return (
       snapshots: {
         epoch: number
       }[],
@@ -22,28 +44,25 @@ export default class TrainDialog extends React.Component<TrainDialogProps> {
       const lastEpoch = snapshots
         .map(({ epoch }) => epoch)
         .reduce((acc, curr) => (curr > acc ? curr : acc))
-      console.log(lastEpoch)
-      if (lastEpoch > epochs) {
-        console.log('Done training!')
-      }
+      const doneTraining = lastEpoch === epochs - 1
+      this.setState({ epoch: lastEpoch, doneTraining })
     }
-    const simplified = true
-    trainAgent({ agentName, agentType, epochs, onProgress, simplified })
-    console.log('Sent off to train agent')
   }
 
   render() {
+    const { epoch, doneTraining } = this.state
+    const doneMessage = doneTraining ? (
+      <Typography variant="body1">We have completed training!</Typography>
+    ) : (
+      undefined
+    )
     return (
       <Card>
         <CardHeader>Train New Agent</CardHeader>
         <CardContent>
-          <Typography variant="body1">
-            This is some dummy text to indicate that this is all working
-          </Typography>
+          <Typography variant="body1">Current epoch number: {epoch}</Typography>
         </CardContent>
-        <CardContent>
-          <Typography variant="body1">{}</Typography>
-        </CardContent>
+        <CardContent>{doneMessage}</CardContent>
         <CardContent style={{ display: 'flex', justifyContent: 'flex' }}>
           <Button text="Train Agent" onClick={this.callTrainAgent} />
         </CardContent>
