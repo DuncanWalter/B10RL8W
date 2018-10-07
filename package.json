@@ -30,6 +30,7 @@
       "js"
     ]
   },
+  "browserslist": "last 1 Chrome versions",
   "prettier": {
     "semi": false,
     "singleQuote": true,

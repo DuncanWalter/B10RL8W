@@ -42,9 +42,9 @@ export function trainNewAgent({
 
   let additionalEpochsTrained = 0
 
-  let randomAgent = createRandomAgent(36)
+  let randomAgent = createRandomAgent()
   // TODO:
-  let heuristicAgent = createRandomAgent(36)
+  let heuristicAgent = createRandomAgent()
 
   trainAgent(trainingAgent, epochs, simplified, epoch => {
     // TODO keep track of agent epochs for logging,
@@ -65,13 +65,21 @@ export function trainNewAgent({
     additionalEpochsTrained += 1
     if (epoch === epochs - 1) {
       fetch(
-        new Request(`localhost:${config.port}/${encodeURIComponent(name)}`, {
-          method: 'POST',
-          body: JSON.stringify({
-            serializedContent: trainingAgent.serialize(),
-            additionalEpochsTrained,
-          }),
-        }),
+        new Request(
+          `http://localhost:${config.loggerPort}/log/${encodeURIComponent(
+            name,
+          )}`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'text/json',
+            },
+            body: JSON.stringify({
+              serializedContent: trainingAgent.serialize(),
+              additionalEpochsTrained,
+            }),
+          },
+        ),
       )
     }
   })

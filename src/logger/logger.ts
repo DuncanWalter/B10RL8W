@@ -14,6 +14,7 @@ import {
   LogUpdate,
 } from './types'
 import { unwrapStream } from '../utils/streamUtils'
+import { config } from '../config'
 
 export const app = new Koa()
 
@@ -70,13 +71,13 @@ async function grabLog(session: string) {
 async function updateLog(session: string, update: LogUpdate) {
   await fs.ensureDir('.logs')
   const fileName = sanitizeSessionName(session)
-  const filePath = path.join('.logs', `${fileName}.json`)
+  const filePath = `${fileName}.json`
   const existingFilePaths = await fs.readdir('.logs/')
   let newLog: LogData
   const doUpdate = existingFilePaths.includes(filePath)
   const currentTime = Date.now()
   if (doUpdate) {
-    const logContent: LogData = await fs.readJson(filePath)
+    const logContent: LogData = await fs.readJson(path.join('.logs', filePath))
     try {
       newLog = {
         ...logContent,
@@ -102,7 +103,7 @@ async function updateLog(session: string, update: LogUpdate) {
       serializedContent: update.serializedContent,
     }
   }
-  return fs.writeJSON(filePath, newLog).then(() =>
+  return fs.writeJSON(path.join('.logs', filePath), newLog).then(() =>
     JSON.stringify({
       message: doUpdate
         ? `Successfully updated ${session}`
@@ -126,6 +127,7 @@ async function processRequest<Rest extends any[]>(
   requestFunction: (ctx: Koa.Context, ...rest: Rest) => Promise<void>,
   ...rest: Rest
 ) {
+  ctx.type = 'text/json'
   try {
     await requestFunction(ctx, ...rest)
   } catch (err) {
@@ -197,7 +199,22 @@ async function requestLogDelete(ctx: Koa.Context, session: string) {
     ctx.response.status = 500
   }
 }
-
+app.use(async (ctx, next) => {
+  ctx.set(
+    'Access-Control-Allow-Origin',
+    `http://localhost:${config.clientPort}`,
+  )
+  ctx.set(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept',
+  )
+  ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS')
+  if (ctx.method === 'OPTIONS') {
+    ctx.status = 200
+  } else {
+    await next()
+  }
+})
 app.use(route.get('/logs', ctx => processRequest(ctx, requestLogs)))
 app.use(
   route.get('/log/:session', (ctx, session) =>

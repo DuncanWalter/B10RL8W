@@ -1,9 +1,75 @@
 import React from 'react'
+import { trainAgent } from '../web-worker/service'
+import Card from './Card'
+import CardHeader from './CardHeader'
+import CardContent from './CardContent'
+import Typography from '@material-ui/core/Typography'
+import Button from './Button'
 
 export type TrainDialogProps = any
 
-export default class TrainDialog extends React.Component<TrainDialogProps> {
+// TODO this will get moved to the results/eval dialog later
+type TrainDialogState = {
+  epoch: number
+  doneTraining: boolean
+}
+
+export default class TrainDialog extends React.Component<
+  TrainDialogProps,
+  TrainDialogState
+> {
+  constructor(props: TrainDialogProps) {
+    super(props)
+    this.state = {
+      epoch: 0,
+      doneTraining: false,
+    }
+  }
+
+  callTrainAgent = () => {
+    const agentName = 'Fred'
+    const agentType = 'contextless'
+    const epochs = 10
+    const onProgress = this.trainingCallback(epochs)
+    const simplified = true
+    trainAgent({ agentName, agentType, epochs, onProgress, simplified })
+  }
+
+  trainingCallback = (epochs: number) => {
+    return (
+      snapshots: {
+        epoch: number
+      }[],
+    ) => {
+      const lastEpoch = snapshots
+        .map(({ epoch }) => epoch)
+        .reduce((acc, curr) => (curr > acc ? curr : acc))
+      const doneTraining = lastEpoch === epochs - 1
+      this.setState({ epoch: lastEpoch, doneTraining })
+    }
+  }
+
   render() {
-    return 'This is a placeholder TrainDialog'
+    const { epoch, doneTraining } = this.state
+    const doneMessage = doneTraining ? (
+      <CardContent>
+        <Typography variant="body1">We have completed training!</Typography>
+      </CardContent>
+    ) : (
+      undefined
+    )
+    return (
+      <Card>
+        <CardHeader>Train New Agent</CardHeader>
+        <CardContent>
+          <Typography variant="body1">Current epoch number: {epoch}</Typography>
+        </CardContent>
+        {doneMessage}
+        <CardContent style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button text="Dismiss" />
+          <Button text="Train Agent" onClick={this.callTrainAgent} />
+        </CardContent>
+      </Card>
+    )
   }
 }

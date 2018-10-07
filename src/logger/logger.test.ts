@@ -2,8 +2,9 @@ import * as http from 'http'
 import { app } from './logger'
 import { GETLogsResponse, LogUpdate, GETLogResponse } from './types'
 import { unwrapStream } from '../utils/streamUtils'
+import { config } from '../config'
 
-const port = 8378
+const port = config.testPort
 
 function requestOptions(path: string, method: string) {
   return {
