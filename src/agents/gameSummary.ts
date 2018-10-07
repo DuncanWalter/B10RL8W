@@ -84,8 +84,8 @@ export const actionSummary: GameSummary<5> = {
  *  the total score,
  *  whether or not hearts has been broken,
  *  whether or not the queen is still in the game */
-export const ruleSummary: GameSummary<4> = {
-  size: 4,
+export const ruleSummary: GameSummary<5> = {
+  size: 5,
   summary(state: State, player: Player, action: Card) {
     let totalScore = 0
     for (let { score } of state.players) {
@@ -100,15 +100,20 @@ export const ruleSummary: GameSummary<4> = {
       queenTaken = 0
     }
 
-    let haveQueen = 0;
+    let haveQueen = 0
     player.hand.forEach(card => {
       if (isQueenOfSpades(card)) {
         haveQueen = 1
       }
-    });
+    })
 
-    return [player.score, totalScore, state.heartsBroken ? 1 : 0,
-      queenTaken, haveQueen]
+    return [
+      player.score,
+      totalScore,
+      state.heartsBroken ? 1 : 0,
+      queenTaken,
+      haveQueen,
+    ]
   },
 }
 
@@ -121,9 +126,8 @@ function isQueenOfSpades(card: Card) {
 export const cardSummary: GameSummary<52> = {
   size: 52,
   summary(state: State, player: Player, action: Card) {
-
     const [hearts, spades, clubs, diamonds] = [0, 1, 2, 3].map(suit => {
-      var ranks = new Array(14).fill(false);
+      var ranks = new Array(13).fill(false)
       state.players.forEach(agent => {
         agent.hand.forEach(card => {
           if (card.suit === suit) {

@@ -11,10 +11,11 @@ import { trainAgent } from './training'
       test(`Running ${summary} agents works`, () => {
         trainAgent(createAgent(summary), 10, true, (epoch, mean, stdDev) => {
           if (epoch % 40 === 39) {
-            console.log(
-              `epoch ${epoch + 1}: \tmean ${mean | 0} \tstdDev ${stdDev | 0}`,
-            )
+            // console.log(
+            //   `epoch ${epoch + 1}: \tmean ${mean | 0} \tstdDev ${stdDev | 0}`,
+            // )
           }
         })
       })
-    })
+    },
+  )
