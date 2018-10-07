@@ -11,7 +11,7 @@
 export type UniformTransformation<Trace = number[]> = {
   type: 'uniform'
   serialize(): string
-  applyLearning(): void
+  applyLearning(replacement: number): void
   passForward(input: number[]): { output: number[]; trace: Trace }
   passBack(trace: Trace, error: number[]): number[]
   size: number
@@ -20,7 +20,7 @@ export type UniformTransformation<Trace = number[]> = {
 export type SimplifiedTransformation = {
   type: 'simplified'
   serialize?(): string
-  applyLearning?(): void
+  applyLearning?(replacement: number): void
   passForward(input: number[]): number[]
   passBack(input: number[], error: number[]): number[]
   size: number

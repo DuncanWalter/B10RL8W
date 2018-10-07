@@ -98,8 +98,10 @@ export function splitTransform(
         )
         return out
       },
-      applyLearning(): void {
-        transformSlices.forEach(({ transform }) => transform.applyLearning())
+      applyLearning(replacement: number): void {
+        transformSlices.forEach(({ transform }) =>
+          transform.applyLearning(replacement),
+        )
       },
       serialize(): string {
         return JSON.stringify(

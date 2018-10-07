@@ -93,16 +93,39 @@ export function mapRow<I, O>(
   return output
 }
 
-// updates the left matrix with new values
-export function matAddMat(a: number[][], b: number[][]): void {
+export function matAddMat(
+  a: number[][],
+  b: number[][],
+  out?: number[][],
+): number[][] {
   const width = a.length
+  const output = out || new Array(width)
   for (let i = 0; i < width; i++) {
-    const column = a[i]
-    const deltas = b[i]
-    for (let j = 0; j < column.length; j++) {
-      column[j] += deltas[j]
+    const aCol = a[i]
+    const bCol = b[i]
+    const oCol = output[i] || new Array(aCol.length)
+    for (let j = 0; j < oCol.length; j++) {
+      oCol[j] = aCol[j] + bCol[j]
     }
   }
+  return output
+}
+
+export function scaleMat(
+  scalar: number,
+  mat: number[][],
+  out?: number[][],
+): number[][] {
+  const width = mat.length
+  const output = out || new Array(width)
+  for (let i = 0; i < width; i++) {
+    const mCol = mat[i]
+    const oCol = output[i] || new Array(mCol.length)
+    for (let j = 0; j < oCol.length; j++) {
+      oCol[j] = scalar * mCol[j]
+    }
+  }
+  return output
 }
 
 export function rowZip(

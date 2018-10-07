@@ -11,14 +11,15 @@ import { sharpTanhTransform } from './sharpTanh'
 export function logicalTransform(outputSize: number): TransformationFactory {
   return pipeTransform(
     biasTransform(),
-    splitTransform(
-      { weight: 1, factory: sharpTanhTransform() },
-      {
-        weight: 3,
-        factory: leakyReluTransform(),
-      },
-    ),
-    biasTransform(),
+    // splitTransform(
+    //   { weight: 1, factory: sharpTanhTransform() },
+    //   {
+    //     weight: 3,
+    //     factory: leakyReluTransform(),
+    //   },
+    // ),
+    leakyReluTransform(),
+    // biasTransform(),
     denseTransform(outputSize),
   )
 }

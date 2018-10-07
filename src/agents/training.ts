@@ -2,9 +2,12 @@ import { Agent, interpretHistory } from '.'
 import { playGame } from '../simulator'
 import { range } from '../utils/range'
 import '../utils/arrayGenerate'
+import { createRandomAgent } from './random'
+import { createHeuristicAgent } from './heuristic'
+import { FeedBack } from './history'
 
 export function trainAgent<F>(
-  { policy, train }: Agent<F>,
+  { policy: agent, train }: Agent<F>,
   epochs: number,
   simplified: boolean,
   log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => {},
@@ -14,13 +17,19 @@ export function trainAgent<F>(
   function cancel() {
     cancelled = true
   }
+  const randy = createRandomAgent().policy
+  const hugo = createHeuristicAgent(simplified).policy
   function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
-      [...range(8)].generate(() =>
-        playGame([policy, policy, policy, policy], simplified)
+      [...range(4)].generate(() => {
+        const [leftHist, _, rightHist] = playGame(
+          [agent, randy, agent, hugo],
+          simplified,
+        )
+        return [leftHist, rightHist]
           .map(interpretHistory)
-          .generate(({ feedBack }) => feedBack),
-      ),
+          .generate(({ feedBack }) => feedBack)
+      }),
     )
     log(epoch, meanLoss, stdDevLoss)
     if (!cancelled && epoch < epochs) {

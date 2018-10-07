@@ -8,7 +8,7 @@ test('The xor function works', () => {
 
   let ann = new NeuralNet(
     {
-      learningRate: 0.08,
+      learningRate: 0.5,
       inputSize: 2,
     },
     guardTransform(),
@@ -18,13 +18,13 @@ test('The xor function works', () => {
     denseTransform(1),
   )
 
-  for (let epoch = 0; epoch < 10; epoch++) {
+  for (let epoch = 0; epoch < 5000; epoch++) {
     let feedBack = []
-    let err = 0
+    // let err = 0
     for (let i in xData) {
       const { output, trace } = ann.passForward(xData[i])
       const error = [yData[i][0] - output[0]]
-      err += Math.abs(error[0])
+      // err += Math.abs(error[0])
       feedBack.push({ trace, error })
     }
     // if (epoch % 1000 === 999) {
