@@ -83,7 +83,7 @@ export function trickPoints(
   return cards.reduce((total, card) => total + cardPoints(card, simplified), 0)
 }
 
-function playerWithCard(
+export function playerWithCard(
   players: Player[],
   suit: keyof typeof suits,
   rank: number,

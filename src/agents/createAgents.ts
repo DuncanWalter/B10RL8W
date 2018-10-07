@@ -11,6 +11,9 @@ import {
   handSummary,
   trickSummary,
   actionSummary,
+  ruleSummary,
+  cardSummary,
+  GameSummary,
 } from './gameSummary'
 
 export const contextlessSummary = joinSummaries(
@@ -19,9 +22,22 @@ export const contextlessSummary = joinSummaries(
   actionSummary,
 )
 
-// TODO lift this into a function that can create agents of any leaning kind
-// TODO we need by handing it a gameSummary object.
-export function createContextlessAgent(): Agent<unknown, 'contextless'> {
+export const ruleTrackingSummary = joinSummaries(
+  handSummary,
+  trickSummary,
+  actionSummary,
+  ruleSummary,
+)
+
+export const cardCountingSummary = joinSummaries(
+  handSummary,
+  trickSummary,
+  actionSummary,
+  cardSummary,
+)
+
+export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
+  // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > 6) {
       return 0.5 * (6 * (Math.abs(a - b) - 6) + 36)
@@ -35,7 +51,7 @@ export function createContextlessAgent(): Agent<unknown, 'contextless'> {
   const net = new NeuralNet(
     {
       learningRate: 0.00003,
-      inputSize: contextlessSummary.size,
+      inputSize: agentSummary.size,
     },
     guardTransform(),
     denseTransform(96),
@@ -49,7 +65,7 @@ export function createContextlessAgent(): Agent<unknown, 'contextless'> {
     type: 'contextless',
     policy(state: State, player: Player, actions: Card[]) {
       return actions
-        .map(action => [...contextlessSummary.summary(state, player, action)])
+        .map(action => [...agentSummary.summary(state, player, action)])
         .map(data => net.passForward(data))
         .map(({ trace, output: [quality] }, index) => ({
           quality,

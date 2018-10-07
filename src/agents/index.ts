@@ -27,7 +27,4 @@ export { trainAgent } from './training'
 export { evaluateAgents } from './evaluating'
 
 export { createRandomAgent } from './random'
-export { createContextlessAgent } from './contextless'
-// TODO:
-// export { createCardCountingAgent } from './cardCounting'
-// export { createRuleTrackingAgent } from './ruleTracking'
+export { createAgent } from './createAgents'
