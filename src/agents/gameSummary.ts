@@ -83,7 +83,8 @@ export const actionSummary: GameSummary<5> = {
  *  the agent's score,
  *  the total score,
  *  whether or not hearts has been broken,
- *  whether or not the queen is still in the game */
+ *  whether or not the queen is still in the game 
+ *  whether or not the agent has the queen */
 export const ruleSummary: GameSummary<5> = {
   size: 5,
   summary(state: State, player: Player, action: Card) {
@@ -127,11 +128,11 @@ export const cardSummary: GameSummary<52> = {
   size: 52,
   summary(state: State, player: Player, action: Card) {
     const [hearts, spades, clubs, diamonds] = [0, 1, 2, 3].map(suit => {
-      var ranks = new Array(13).fill(false)
+      var ranks = new Array(13).fill(0)
       state.players.forEach(agent => {
         agent.hand.forEach(card => {
           if (card.suit === suit) {
-            ranks[card.rank - 2] = true //lowest rank is 2 so subtract 2
+            ranks[card.rank - 2] = 1 //lowest rank is 2 so subtract 2
           }
         })
       })

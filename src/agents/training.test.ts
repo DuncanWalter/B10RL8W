@@ -5,7 +5,6 @@ import {
   cardCountingSummary,
 } from './createAgents'
 import { trainAgent } from './training'
-
   ;[contextlessSummary, ruleTrackingSummary, cardCountingSummary].forEach(
     summary => {
       test(`Running ${summary} agents works`, () => {
