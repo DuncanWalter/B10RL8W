@@ -73,16 +73,90 @@ function createEvaluationCluster(
   return interpretTraceCluster(traceCluster)
 }
 
-function allArrangements<T>(options: T[], arrangementSize: number): T[][] {
-  if (options.length === 0) {
-    throw new Error('Cannot arrange empty combinations')
-  } else if (arrangementSize === 0) {
-    return [[]]
-  } else {
-    return allArrangements(options, arrangementSize - 1).generate(a =>
-      options.map(x => [x, ...a]),
-    )
+export function* allFixedContentCombinations<T>(
+  options: T[],
+  size: number,
+): IterableIterator<T[]> {
+  if (size === 0) {
+    yield []
+  } else if (options.length !== 0) {
+    const [head, ...rest] = options
+    for (let i of range(size + 1)) {
+      const chain = new Array(i).fill(head)
+      for (let prefix of allFixedContentCombinations(rest, size - i)) {
+        yield [...prefix, ...chain]
+      }
+    }
   }
+}
+
+export function* allPermutations<T>(options: T[]): IterableIterator<T[]> {
+  if (options.length <= 1) {
+    yield options
+  } else {
+    const [head, ...rest] = options
+    const substrings = [...allPermutations(rest)]
+    for (let i of range(options.length)) {
+      yield* substrings.map(substring => {
+        const clone = substring.slice(0, substring.length)
+        clone.splice(i, 0, head)
+        return clone
+      })
+    }
+  }
+}
+
+export function cyclicallyIndependent<T>(a: T[], b: T[]): boolean {
+  if (a.length !== b.length) {
+    return true
+  }
+  const len = a.length
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < a.length; j++) {
+      if (a[(i + j) % len] !== b[j]) {
+        break
+      } else if (j === len - 1) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
+export function allFixedContentNecklaces<T>(content: T[]): T[][] {
+  const necklaces: T[][] = []
+  for (let permutation of allPermutations(content)) {
+    if (
+      necklaces.every(necklace => cyclicallyIndependent(necklace, permutation))
+    ) {
+      necklaces.push(permutation)
+    }
+  }
+  return necklaces
+}
+
+export function* allNecklaces<T>(
+  options: T[],
+  size: number,
+): IterableIterator<T[]> {
+  for (let combination of allFixedContentCombinations(options, size)) {
+    yield* allFixedContentNecklaces(combination)
+  }
+}
+
+let lastOptions = [] as any
+let lastSize = -1
+let lastReturn = undefined as any
+function memoAllNecklaces<T>(options: T[], size: number): T[][] {
+  if (
+    options.length === lastOptions.length &&
+    options.every(elem => lastOptions.includes(elem)) &&
+    lastSize === size
+  ) {
+    return lastReturn
+  }
+  lastReturn = [...allNecklaces(options, size)]
+  return lastReturn
 }
 
 function allSame<T>(arr: T[]) {
@@ -104,7 +178,7 @@ export function evaluateAgents(
   games: number,
   simplified: boolean,
 ) {
-  const clusters = allArrangements(agents, 4)
+  const clusters = memoAllNecklaces(agents, 4)
     .filter(agents => !allSame(agents))
     .map((agents, _, { length }) => {
       return createEvaluationCluster(
