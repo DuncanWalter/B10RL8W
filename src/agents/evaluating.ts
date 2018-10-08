@@ -155,6 +155,8 @@ function memoAllNecklaces<T>(options: T[], size: number): T[][] {
   ) {
     return lastReturn
   }
+  lastOptions = options
+  lastSize = size
   lastReturn = [...allNecklaces(options, size)]
   return lastReturn
 }
