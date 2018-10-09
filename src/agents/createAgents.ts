@@ -36,6 +36,14 @@ export const cardCountingSummary = joinSummaries(
   cardSummary,
 )
 
+export const cardSharkSummary = joinSummaries(
+  handSummary,
+  trickSummary,
+  actionSummary,
+  cardSummary,
+  ruleSummary,
+)
+
 export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
