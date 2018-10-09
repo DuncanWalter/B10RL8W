@@ -61,13 +61,15 @@ function createEvaluationCluster(
       .map(({ score }, i) => ({ score, agent: agents[i] }))
       .forEach(({ agent, score }, _, results) => {
         const agentTrace = traceCluster.get(agent)!
+        const rawPerformance = results.reduce((p, { agent: a, score: s }) => {
+          return a === agent || s === score ? p : s > score ? p + 1 : p - 1
+        }, 0)
+        const competitors = results.reduce((c, { agent: a }) => {
+          return a === agent ? c : c + 1
+        }, 0)
         agentTrace.weight += 1
         agentTrace.scores.push(score)
-        agentTrace.performances.push(
-          results.reduce((p, { agent: a, score: s }) => {
-            return a === agent || s === score ? p : s > score ? p + 1 : p - 1
-          }, 0),
-        )
+        agentTrace.performances.push(rawPerformance / competitors)
       })
   }
   return interpretTraceCluster(traceCluster)
