@@ -39,11 +39,9 @@ export default class TrainDialog extends React.Component<
     )
   }
 
-  trainingCallback = (snapshots: { epoch: number }[]) => {
-    const lastEpoch = snapshots
-      .map(({ epoch }) => epoch)
-      .reduce((acc, curr) => (curr > acc ? curr : acc))
-    this.setState({ epoch: lastEpoch })
+  trainingCallback = (snapshot: { epoch: number }) => {
+    console.log(snapshot)
+    this.setState(state => ({ epoch: Math.max(snapshot.epoch, state.epoch) }))
   }
 
   render() {

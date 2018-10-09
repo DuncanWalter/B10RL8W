@@ -1,13 +1,9 @@
-import {
-  trainAgent,
-  createContextlessAgent,
-  Agent,
-  createRandomAgent,
-} from '../agents'
+import { trainAgent, createAgent, Agent, createRandomAgent } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
+import { contextlessSummary } from '../agents/createAgents'
 
 export function trainNewAgent({
   agentType,
@@ -18,7 +14,7 @@ export function trainNewAgent({
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
-      trainingAgent = createContextlessAgent()
+      trainingAgent = createAgent(contextlessSummary)
       break
     }
     default: {

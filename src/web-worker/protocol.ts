@@ -4,14 +4,6 @@ export type TrainCommand = {
   epochs: number
   simplified: boolean
   agentType: 'contextless' | 'card-counting' | 'rule-tracking' | 'complete'
-  // onProgress(
-  //   snapshots: {
-  //     epoch: number
-  //     random: Snapshot
-  //     agent: Snapshot
-  //     heuristic: Snapshot
-  //   }[],
-  // ): void
 }
 
 export type CancelCommand = {
@@ -22,6 +14,7 @@ export type CancelCommand = {
 export type EvaluateCommand = {
   command: 'evaluate-agents'
   agents: string[]
+  simplified: boolean
 }
 
 export type Command = TrainCommand | CancelCommand | EvaluateCommand

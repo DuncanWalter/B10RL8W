@@ -24,11 +24,11 @@ export function trainAgent<F>(
     )
     log(epoch, meanLoss, stdDevLoss)
     if (!cancelled && epoch < epochs) {
-      setImmediate(() => trainEpoch(epoch + 1))
+      setTimeout(trainEpoch, 0, epoch + 1)
     } else {
       done()
     }
   }
-  setImmediate(() => trainEpoch(1))
+  setTimeout(trainEpoch, 0, 1)
   return cancel
 }
