@@ -24,8 +24,8 @@ export function trainNewAgent({
 
   let additionalEpochsTrained = 0
 
-  let randy = createRandomAgent()
-  let hugo = createHeuristicAgent(simplified)
+  const randy = createRandomAgent()
+  const hugo = createHeuristicAgent(simplified)
 
   return trainAgent(
     trainingAgent,

@@ -8,7 +8,7 @@ export function trainAgent<F>(
   epochs: number,
   simplified: boolean,
   log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => {},
-  done: () => void = () => {},
+  done: (cancelled: boolean) => void = () => {},
 ) {
   let cancelled = false
   function cancel() {
@@ -26,7 +26,7 @@ export function trainAgent<F>(
     if (!cancelled && epoch < epochs) {
       setTimeout(trainEpoch, 0, epoch + 1)
     } else {
-      done()
+      done(cancelled)
     }
   }
   setTimeout(trainEpoch, 0, 1)
