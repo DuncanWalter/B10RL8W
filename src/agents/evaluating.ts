@@ -220,9 +220,9 @@ export function evaluateAgents(
     .map(
       ({ weight, meanScore, varScore, meanPerformance, varPerformance }) => ({
         meanScore: meanScore / weight,
-        stdDevScore: (varScore / weight) ** 0.5,
+        stdDevScore: varScore ** 0.5 / weight,
         meanPerformance: meanPerformance / weight,
-        stdDevPerformance: (varPerformance / weight) ** 0.5,
+        stdDevPerformance: varPerformance ** 0.5 / weight,
       }),
     )
 }

@@ -37,8 +37,8 @@ export function pipeTransform(
           return passBack(trace[i].trace, error)
         }, error)
       },
-      applyLearning() {
-        transforms.forEach(({ applyLearning }) => applyLearning())
+      applyLearning(replacement: number) {
+        transforms.forEach(({ applyLearning }) => applyLearning(replacement))
       },
       serialize() {
         return JSON.stringify(transforms.map(({ serialize }) => serialize()))

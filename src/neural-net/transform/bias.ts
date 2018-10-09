@@ -3,7 +3,7 @@ import { vector, rowZip, add, mul, mapRow } from '../batchMath'
 
 export function biasTransform(
   seed: (i: number, n: number) => number = (i, n) =>
-    ((i % 2 === 0 ? 1 : -1) * Math.random()) / Math.sqrt(n),
+    ((i % 2 === 0 ? 1 : -1) / Math.sqrt(n)) * Math.random(),
 ): TransformationFactory {
   return ({ size, serializedContent }) => {
     const weights = serializedContent
@@ -16,12 +16,11 @@ export function biasTransform(
         return rowZip(batch, weights, add)
       },
       passBack(batch: number[], error) {
-        const vec = rowZip(batch, error, mul)
-        rowZip(deltas, mapRow(vec, x => x / deltas.length, vec), add, deltas)
+        rowZip(deltas, error, add, deltas)
         return error
       },
-      applyLearning() {
-        rowZip(weights, deltas, add, weights)
+      applyLearning(replacement: number) {
+        rowZip(weights, deltas, (a, b) => a + replacement * b, weights)
         deltas = vector(size, () => 0)
       },
       serialize() {

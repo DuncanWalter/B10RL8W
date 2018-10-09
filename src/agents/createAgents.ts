@@ -58,14 +58,15 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   }
   const net = new NeuralNet(
     {
-      learningRate: 0.00003,
+      learningRate: 0.01,
       inputSize: agentSummary.size,
     },
     guardTransform(),
     denseTransform(96),
     logicalTransform(64),
     logicalTransform(64),
-    logicalTransform(64),
+    logicalTransform(48),
+    logicalTransform(32),
     denseTransform(1),
   )
 
@@ -93,7 +94,7 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
       })
       const mean = loss.reduce((sum, loss) => sum + loss) / loss.length
       const variance =
-        loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length
+        loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length ** 2
       return {
         meanLoss: mean,
         stdDevLoss: Math.sqrt(variance),
