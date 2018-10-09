@@ -65,6 +65,8 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
     denseTransform(96),
     logicalTransform(64),
     logicalTransform(64),
+    logicalTransform(48),
+    logicalTransform(32),
     denseTransform(1),
   )
 
