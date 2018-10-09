@@ -113,8 +113,8 @@ export function cyclicallyIndependent<T>(a: T[], b: T[]): boolean {
     return true
   }
   const len = a.length
-  for (let i = 0; i < a.length; i++) {
-    for (let j = 0; j < a.length; j++) {
+  for (let i = 0; i < len; i++) {
+    for (let j = 0; j < len; j++) {
       if (a[(i + j) % len] !== b[j]) {
         break
       } else if (j === len - 1) {
@@ -146,22 +146,24 @@ export function* allNecklaces<T>(
   }
 }
 
-let lastOptions = [] as any
-let lastSize = -1
-let lastReturn = undefined as any
-function memoAllNecklaces<T>(options: T[], size: number): T[][] {
-  if (
-    options.length === lastOptions.length &&
-    options.every(elem => lastOptions.includes(elem)) &&
-    lastSize === size
-  ) {
+const memoAllNecklaces = (function() {
+  let lastOptions = [] as any
+  let lastSize = -1
+  let lastReturn = undefined as any
+  return function<T>(options: T[], size: number): T[][] {
+    if (
+      options.length === lastOptions.length &&
+      options.every(elem => lastOptions.includes(elem)) &&
+      lastSize === size
+    ) {
+      return lastReturn
+    }
+    lastOptions = options
+    lastSize = size
+    lastReturn = [...allNecklaces(options, size)]
     return lastReturn
   }
-  lastOptions = options
-  lastSize = size
-  lastReturn = [...allNecklaces(options, size)]
-  return lastReturn
-}
+})()
 
 function allSame<T>(arr: T[]) {
   if (arr.length === 0) {
