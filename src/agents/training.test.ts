@@ -23,7 +23,7 @@ test(`Contextless agents can be trained`, done => {
       s += stdDev
       if (epoch % g === g - 1) {
         // console.log(
-        //   `epoch ${epoch + 1}: \tmean ${(((10 * m) / g) | 0) /
+        //   `epoch ${epoch}: \tmean ${(((10 * m) / g) | 0) /
         //     10} \tstdDev ${(((10 * s) / g) | 0) / 10}`,
         // )
         m = 0
@@ -49,7 +49,7 @@ test(`Rule Tracking agents can be trained`, done => {
       s += stdDev
       if (epoch % g === g - 1) {
         // console.log(
-        //   `epoch ${epoch + 1}: \tmean ${(((10 * m) / g) | 0) /
+        //   `epoch ${epoch}: \tmean ${(((10 * m) / g) | 0) /
         //     10} \tstdDev ${(((10 * s) / g) | 0) / 10}`,
         // )
         m = 0
@@ -75,7 +75,7 @@ test(`Card Counting agents can be trained`, done => {
       s += stdDev
       if (epoch % g === g - 1) {
         // console.log(
-        //   `epoch ${epoch + 1}: \tmean ${(((10 * m) / g) | 0) /
+        //   `epoch ${epoch}: \tmean ${(((10 * m) / g) | 0) /
         //     10} \tstdDev ${(((10 * s) / g) | 0) / 10}`,
         // )
         m = 0
@@ -101,7 +101,7 @@ test(`Card Shark agents can be trained`, done => {
       s += stdDev
       if (epoch % g === g - 1) {
         // console.log(
-        //   `epoch ${epoch + 1}: \tmean ${(((10 * m) / g) | 0) /
+        //   `epoch ${epoch}: \tmean ${(((10 * m) / g) | 0) /
         //     10} \tstdDev ${(((10 * s) / g) | 0) / 10}`,
         // )
         m = 0
