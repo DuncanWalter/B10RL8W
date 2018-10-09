@@ -42,9 +42,9 @@ export function trainAgent({
   epochs,
   onProgress,
   simplified,
-}: TrainCommand): Promise<void> {
-  return new Promise(resolve => {
-    const worker = new Worker(script)
+}: TrainCommand): Promise<void> & { cancel: () => void } {
+  const worker = new Worker(script)
+  const training = new Promise(resolve => {
     worker.onerror = () => {
       throw new Error('Worker process encountered unexpected error')
     }
@@ -56,6 +56,7 @@ export function trainAgent({
           return
         }
         case 'done': {
+          worker.terminate()
           resolve()
           return
         }
@@ -73,7 +74,10 @@ export function trainAgent({
         epochs,
       }),
     )
-  })
+  }) as Promise<void> & { cancel: () => void }
+  training.cancel = () =>
+    worker.postMessage(JSON.stringify({ command: 'cancel-work' }))
+  return training
 }
 
 export function evaluateAgents({

@@ -7,9 +7,14 @@ export function trainAgent<F>(
   { policy, train }: Agent<F>,
   epochs: number,
   simplified: boolean,
-  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void,
+  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => {},
+  done: () => void = () => {},
 ) {
-  for (let i of range(epochs)) {
+  let cancelled = false
+  function cancel() {
+    cancelled = true
+  }
+  function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
       [...range(8)].generate(() =>
         playGame([policy, policy, policy, policy], simplified)
@@ -17,6 +22,13 @@ export function trainAgent<F>(
           .generate(({ feedBack }) => feedBack),
       ),
     )
-    log(i, meanLoss, stdDevLoss)
+    log(epoch, meanLoss, stdDevLoss)
+    if (!cancelled && epoch < epochs) {
+      setImmediate(() => trainEpoch(epoch + 1))
+    } else {
+      done()
+    }
   }
+  setImmediate(() => trainEpoch(1))
+  return cancel
 }

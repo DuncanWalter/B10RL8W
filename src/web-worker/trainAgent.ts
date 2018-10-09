@@ -7,29 +7,14 @@ import {
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
-
-type TrainingConfiguration = {
-  name: string
-  agentType: string
-  simplified: boolean
-  epochs: number
-  emitProgress: (
-    snapshot: {
-      epoch: number
-      agent: unknown
-      random: unknown
-      heuristic: unknown
-    },
-  ) => void
-}
+import { TrainCommand, postMessage } from './protocol'
 
 export function trainNewAgent({
-  name,
   agentType,
-  simplified,
+  agentName,
   epochs,
-  emitProgress,
-}: TrainingConfiguration) {
+  simplified,
+}: TrainCommand) {
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
@@ -43,44 +28,51 @@ export function trainNewAgent({
 
   let additionalEpochsTrained = 0
 
-  let randomAgent = createRandomAgent()
-  let heuristicAgent = createHeuristicAgent(simplified)
+  let randy = createRandomAgent()
+  let hugo = createHeuristicAgent(simplified)
 
-  trainAgent(trainingAgent, epochs, simplified, epoch => {
-    additionalEpochsTrained += 1
+  return trainAgent(
+    trainingAgent,
+    epochs,
+    simplified,
+    epoch => {
+      additionalEpochsTrained += 1
 
-    if (epoch === 0 || epoch % 5 === 4 || epoch === epochs - 1) {
-      const [agent, random, heuristic] = evaluateAgents(
-        [trainingAgent, randomAgent, heuristicAgent],
-        150,
-        simplified,
-      )
-      emitProgress({
-        epoch: epoch + 1,
-        agent,
-        random,
-        heuristic,
-      })
-    }
+      if (epoch === 1 || epoch % 5 === 0 || epoch === epochs) {
+        const [agent, random, heuristic] = evaluateAgents(
+          [trainingAgent, randy, hugo],
+          150,
+          simplified,
+        )
+        postMessage({
+          type: 'training-progress',
+          epoch,
+          agent,
+          random,
+          heuristic,
+        })
+      }
 
-    if (epoch === 0 || epoch === epochs - 1) {
-      fetch(
-        new Request(
-          `http://localhost:${config.loggerPort}/log/${encodeURIComponent(
-            name,
-          )}`,
-          {
-            method: 'POST',
-            headers: {
-              'content-type': 'text/json',
+      if (epoch === 1 || epoch === epochs) {
+        fetch(
+          new Request(
+            `http://localhost:${config.loggerPort}/log/${encodeURIComponent(
+              agentName,
+            )}`,
+            {
+              method: 'POST',
+              headers: {
+                'content-type': 'text/json',
+              },
+              body: JSON.stringify({
+                serializedContent: trainingAgent.serialize(),
+                additionalEpochsTrained,
+              }),
             },
-            body: JSON.stringify({
-              serializedContent: trainingAgent.serialize(),
-              additionalEpochsTrained,
-            }),
-          },
-        ),
-      )
-    }
-  })
+          ),
+        )
+      }
+    },
+    () => postMessage({ type: 'done' }),
+  )
 }

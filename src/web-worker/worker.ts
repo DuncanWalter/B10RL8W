@@ -1,40 +1,32 @@
 import { trainNewAgent } from './trainAgent'
+import { Command, postMessage } from './protocol'
 
-declare function postMessage(message: string): void
+let cancel = () => {}
 
 self.onmessage = event => {
-  const data = JSON.parse(event.data)
+  const data: Command = JSON.parse(event.data)
   switch (data.command) {
     case 'train-agent': {
-      trainNewAgent({
-        agentType: data.agentType,
-        name: data.agentName,
-        epochs: data.epochs,
-        simplified: data.simplified,
-        emitProgress: snapshot => {
-          postMessage(
-            JSON.stringify({
-              type: 'training-progress',
-              snapshots: [snapshot],
-            }),
-          )
-        },
-      })
-      postMessage(JSON.stringify({ type: 'done' }))
+      cancel = trainNewAgent(data)
       break
     }
     case 'evaluate-agents': {
-      postMessage(
-        JSON.stringify({
-          type: 'evaluation-results',
-          results: {
-            meanScore: 0,
-            stdDevScore: 0,
-            meanPerformance: 0,
-            stdDevPerformance: 0,
-          },
-        }),
-      )
+      // postMessage({
+      //   type: 'evaluation-results',
+      //   results: [
+      //     {
+      //       meanScore: 0,
+      //       stdDevScore: 0,
+      //       meanPerformance: 0,
+      //       stdDevPerformance: 0,
+      //     },
+      //   ],
+      // })
+      postMessage({ type: 'done' })
+      break
+    }
+    case 'cancel-work': {
+      cancel()
       break
     }
     default: {
