@@ -5,6 +5,7 @@ import CardHeader from './CardHeader'
 import CardContent from './CardContent'
 import Typography from '@material-ui/core/Typography'
 import Button from './Button'
+import { ResponsiveLine } from '@nivo/line'
 
 export type TrainDialogProps = any
 
@@ -58,6 +59,20 @@ export default class TrainDialog extends React.Component<
         <CardHeader>Train New Agent</CardHeader>
         <CardContent>
           <Typography variant="body1">Current epoch number: {epoch}</Typography>
+        </CardContent>
+        <CardContent style={{ height: '400px' }}>
+          <ResponsiveLine
+            data={[
+              {
+                id: 'main',
+                data: [{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 6 }],
+              },
+              {
+                id: 'non',
+                data: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 2 }],
+              },
+            ]}
+          />
         </CardContent>
         {doneMessage}
         <CardContent style={{ display: 'flex', justifyContent: 'flex-end' }}>
