@@ -1,4 +1,5 @@
 import { app } from './logger/logger'
+import { config } from './config'
 
-app.listen(1233)
-console.log('> Logger listening on port 1233')
+app.listen(config.loggerPort)
+console.log(`> Logger listening on port ${config.loggerPort}`)

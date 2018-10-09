@@ -5,23 +5,22 @@ type LogBase = {
     | 'card-counting'
     | 'context-learning'
   simplified: boolean
-  suitCount: number
 }
 type LogDataAttributes = {
   sessionName: string
-  gamesPlayed: number
+  epochsTrained: number
   creationTime: number
   lastUpdate: number
-  qualityWeights: number[][][]
+  serializedContent: string
 }
 type LogHeaderAttributes = {
   sessionName: string
-  gamesPlayed: number
+  epochsTrained: number
   lastUpdate: number
 }
 type LogUpdateAttributes = {
-  additionalGamesPlayed: number
-  newQualityWeights: number[][][]
+  additionalEpochsTrained: number
+  serializedContent: string
 }
 
 export type LogData = LogBase & LogDataAttributes

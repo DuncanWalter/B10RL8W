@@ -2,8 +2,9 @@ import * as http from 'http'
 import { app } from './logger'
 import { GETLogsResponse, LogUpdate, GETLogResponse } from './types'
 import { unwrapStream } from '../utils/streamUtils'
+import { config } from '../config'
 
-const port = 8378
+const port = config.testPort
 
 function requestOptions(path: string, method: string) {
   return {
@@ -17,9 +18,8 @@ function requestOptions(path: string, method: string) {
 const testFileUpdate: LogUpdate = {
   agentType: 'contextless',
   simplified: true,
-  suitCount: 4,
-  additionalGamesPlayed: 1,
-  newQualityWeights: [[[9001]]],
+  additionalEpochsTrained: 1,
+  serializedContent: 'null',
 }
 
 function testCreateLog(): Promise<void> {

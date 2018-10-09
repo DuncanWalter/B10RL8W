@@ -1,50 +1,22 @@
+import {
+  DoneMessage,
+  TrainingProgressMessage,
+  TrainCommand,
+  AgentEvaluation,
+  EvaluateCommand,
+} from './protocol'
+
 const script = (document.getElementById('worker') as any).src
 
-type TrainCommand = {
-  agentName: string
-  epochs: number
-  simplified: boolean
-  onProgress(
-    snapshots: {
-      epochs: number
-      random: Snapshot
-      agent: Snapshot
-      heuristic: Snapshot
-    }[],
-  ): void
-  agentType: 'contextless' | 'card-counting' | 'rule-tracking' | 'complete'
-}
-
-type Snapshot = {
-  scoreMean: number
-  scoreStdDev: number
-  performanceMean: number
-  performanceStdDev: number
-}
-
-type TrainingProgressMessage = {
-  type: 'training-progress'
-  snapshots: {
-    epochs: number
-    random: Snapshot
-    agent: Snapshot
-    heuristic: Snapshot
-  }[]
-}
-
-type DoneMessage = {
-  type: 'done'
-}
-
 export function trainAgent({
-  agentName,
-  agentType,
-  epochs,
-  onProgress,
-  simplified,
-}: TrainCommand): Promise<void> {
-  return new Promise(resolve => {
-    const worker = new Worker(script)
+  agentName = 'Fred',
+  agentType = 'contextless',
+  epochs = 10,
+  onProgress = (_: TrainingProgressMessage) => {},
+  simplified = true,
+}): Promise<void> & { cancel: () => void } {
+  const worker = new Worker(script)
+  const training = new Promise(resolve => {
     worker.onerror = () => {
       throw new Error('Worker process encountered unexpected error')
     }
@@ -52,10 +24,11 @@ export function trainAgent({
       const message: TrainingProgressMessage | DoneMessage = JSON.parse(data)
       switch (message.type) {
         case 'training-progress': {
-          onProgress(message.snapshots)
+          onProgress(message)
           return
         }
         case 'done': {
+          worker.terminate()
           resolve()
           return
         }
@@ -71,18 +44,21 @@ export function trainAgent({
         agentName,
         simplified,
         epochs,
-      }),
+      } as TrainCommand),
     )
-  })
+  }) as Promise<void> & { cancel: () => void }
+  training.cancel = () =>
+    worker.postMessage(JSON.stringify({ command: 'cancel-work' }))
+  return training
 }
 
 export function evaluateAgents({
-  names,
+  agents,
   simplified,
 }: {
-  names: string[]
+  agents: string[]
   simplified: boolean
-}): Promise<{ [name: string]: Snapshot }> {
+}): Promise<{ [name: string]: AgentEvaluation }> {
   return new Promise(resolve => {
     const worker = new Worker(script)
     worker.onerror = () => {
@@ -104,9 +80,9 @@ export function evaluateAgents({
     worker.postMessage(
       JSON.stringify({
         command: 'evaluate-agents',
-        names,
+        agents,
         simplified,
-      }),
+      } as EvaluateCommand),
     )
   })
 }

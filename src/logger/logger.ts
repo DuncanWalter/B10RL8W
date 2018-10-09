@@ -14,13 +14,7 @@ import {
   LogUpdate,
 } from './types'
 import { unwrapStream } from '../utils/streamUtils'
-
-const pwd = process.env.PWD!
-if (pwd === undefined) {
-  throw Error(
-    'Cannot determine the present working directory required for storing logs',
-  )
-}
+import { config } from '../config'
 
 export const app = new Koa()
 
@@ -29,8 +23,7 @@ function retrieveHeader(log: LogHeader) {
     sessionName: log.sessionName,
     agentType: log.agentType,
     simplified: log.simplified,
-    suitCount: log.suitCount,
-    gamesPlayed: log.gamesPlayed,
+    epochsTrained: log.epochsTrained,
     lastUpdate: log.lastUpdate,
   } as LogHeader
 }
@@ -46,7 +39,6 @@ function updateValid(newLog: LogData, update: LogUpdate, session: string) {
   return (
     newLog.agentType == update.agentType &&
     newLog.simplified == update.simplified &&
-    newLog.suitCount == update.suitCount &&
     newLog.sessionName == session
   )
 }
@@ -54,13 +46,11 @@ function updateValid(newLog: LogData, update: LogUpdate, session: string) {
 const validFileNameChars = /[a-zA-Z0-9\_]/
 
 async function listLogs() {
-  await fs.ensureDir(path.join(pwd, '.logs'))
-  const logPromises = (await fs.readdir(path.join(pwd, '.logs')))
+  await fs.ensureDir('.logs')
+  const logPromises = (await fs.readdir('.logs'))
     .filter(file => file.slice(-5) === '.json')
     .map(async file =>
-      retrieveHeader((await fs.readJson(
-        path.join(pwd, '.logs', file),
-      )) as LogData),
+      retrieveHeader((await fs.readJson(path.join('.logs', file))) as LogData),
     )
 
   return Promise.all(logPromises)
@@ -71,28 +61,29 @@ async function listLogs() {
 }
 
 async function grabLog(session: string) {
-  await fs.ensureDir(path.join(pwd, '.logs'))
+  await fs.ensureDir('.logs')
   const fileName = sanitizeSessionName(session)
   return JSON.stringify((await fs.readJson(
-    path.join(pwd, '.logs/', `${fileName}.json`),
+    path.join('.logs/', `${fileName}.json`),
   )) as GETLogResponse)
 }
 
 async function updateLog(session: string, update: LogUpdate) {
-  await fs.ensureDir(path.join(pwd, '.logs'))
+  await fs.ensureDir('.logs')
   const fileName = sanitizeSessionName(session)
-  const filePath = path.join(pwd, '.logs', `${fileName}.json`)
-  const existingFilePaths = await fs.readdir(path.join(pwd, '.logs/'))
+  const filePath = `${fileName}.json`
+  const existingFilePaths = await fs.readdir('.logs/')
   let newLog: LogData
   const doUpdate = existingFilePaths.includes(filePath)
   const currentTime = Date.now()
   if (doUpdate) {
-    const logContent: LogData = await fs.readJson(filePath)
+    const logContent: LogData = await fs.readJson(path.join('.logs', filePath))
     try {
       newLog = {
         ...logContent,
-        gamesPlayed: logContent.gamesPlayed + update.additionalGamesPlayed,
-        qualityWeights: update.newQualityWeights,
+        epochsTrained:
+          logContent.epochsTrained + update.additionalEpochsTrained,
+        serializedContent: update.serializedContent,
         lastUpdate: currentTime,
       }
     } catch {
@@ -105,15 +96,14 @@ async function updateLog(session: string, update: LogUpdate) {
     newLog = {
       agentType: update.agentType,
       simplified: update.simplified,
-      suitCount: update.suitCount,
       sessionName: session,
-      gamesPlayed: update.additionalGamesPlayed,
+      epochsTrained: update.additionalEpochsTrained,
       creationTime: currentTime,
       lastUpdate: currentTime,
-      qualityWeights: update.newQualityWeights,
+      serializedContent: update.serializedContent,
     }
   }
-  return fs.writeJSON(filePath, newLog).then(() =>
+  return fs.writeJSON(path.join('.logs', filePath), newLog).then(() =>
     JSON.stringify({
       message: doUpdate
         ? `Successfully updated ${session}`
@@ -123,9 +113,9 @@ async function updateLog(session: string, update: LogUpdate) {
 }
 
 async function deleteLog(session: string) {
-  await fs.ensureDir(path.join(pwd, '.logs'))
+  await fs.ensureDir('.logs')
   const fileName = sanitizeSessionName(session)
-  return fs.remove(path.join(pwd, '.logs/', `${fileName}.json`)).then(() =>
+  return fs.remove(path.join('.logs/', `${fileName}.json`)).then(() =>
     JSON.stringify({
       message: `Successfully deleted file ${session}`,
     } as DELETELogResponse),
@@ -137,6 +127,7 @@ async function processRequest<Rest extends any[]>(
   requestFunction: (ctx: Koa.Context, ...rest: Rest) => Promise<void>,
   ...rest: Rest
 ) {
+  ctx.type = 'text/json'
   try {
     await requestFunction(ctx, ...rest)
   } catch (err) {
@@ -208,7 +199,22 @@ async function requestLogDelete(ctx: Koa.Context, session: string) {
     ctx.response.status = 500
   }
 }
-
+app.use(async (ctx, next) => {
+  ctx.set(
+    'Access-Control-Allow-Origin',
+    `http://localhost:${config.clientPort}`,
+  )
+  ctx.set(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept',
+  )
+  ctx.set('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS')
+  if (ctx.method === 'OPTIONS') {
+    ctx.status = 200
+  } else {
+    await next()
+  }
+})
 app.use(route.get('/logs', ctx => processRequest(ctx, requestLogs)))
 app.use(
   route.get('/log/:session', (ctx, session) =>
