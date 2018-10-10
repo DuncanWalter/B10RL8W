@@ -68,15 +68,17 @@ export const trickSummary: GameSummary<5> = {
 
 /** the summary of the action gives the agent:
  *  the suit of the card the agent is playing,
- *  the rank of the card the agent is playing */
-export const actionSummary: GameSummary<5> = {
-  size: 5,
+ *  the rank of the card the agent is playing
+ *  the points of the card being played*/
+export const actionSummary: GameSummary<6> = {
+  size: 6,
   summary(state: State, player: Player, action: Card) {
     return [
       ...(Object.keys(suits) as (keyof typeof suits)[]).map(suit => {
         return action.suit === suits[suit] ? 1 : 0
       }),
       action.rank,
+      cardPoints(action, state.simplified),
     ]
   },
 }

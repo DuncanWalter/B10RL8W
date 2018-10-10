@@ -94,7 +94,7 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
       })
       const mean = loss.reduce((sum, loss) => sum + loss) / loss.length
       const variance =
-        loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length ** 2
+        loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length
       return {
         meanLoss: mean,
         stdDevLoss: Math.sqrt(variance),
