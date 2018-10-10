@@ -22,3 +22,5 @@ export function createRandomAgent(): Agent<null, 'random'> {
     },
   }
 }
+
+export const randomAgent = createRandomAgent()
