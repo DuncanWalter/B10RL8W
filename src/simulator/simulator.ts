@@ -134,6 +134,12 @@ function playCard(
           ? {
               ...player,
               hand: player.hand.filter(handCard => handCard !== action),
+              playsOutOfSuit:
+                trick.suit !== null && trick.suit !== action.suit
+                  ? player.playsOutOfSuit.map(
+                      (b, s) => (s === trick.suit ? true : b),
+                    )
+                  : player.playsOutOfSuit,
             }
           : player,
     ) as [Player, Player, Player, Player],

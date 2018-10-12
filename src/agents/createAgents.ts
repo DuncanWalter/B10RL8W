@@ -14,6 +14,7 @@ import {
   ruleSummary,
   cardSummary,
   GameSummary,
+  opponentSummary,
 } from './gameSummary'
 
 export const contextlessSummary = joinSummaries(
@@ -40,8 +41,16 @@ export const cardSharkSummary = joinSummaries(
   handSummary,
   trickSummary,
   actionSummary,
-  cardSummary,
+  opponentSummary,
+)
+
+export const cardGuruSummary = joinSummaries(
+  handSummary,
+  trickSummary,
+  actionSummary,
   ruleSummary,
+  cardCountingSummary,
+  opponentSummary,
 )
 
 export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
@@ -62,8 +71,8 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
       inputSize: agentSummary.size,
     },
     guardTransform(),
-    denseTransform(96),
-    logicalTransform(64),
+    denseTransform(120),
+    logicalTransform(80),
     logicalTransform(64),
     logicalTransform(48),
     logicalTransform(32),
