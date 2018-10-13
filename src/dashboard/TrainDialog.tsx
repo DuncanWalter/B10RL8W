@@ -6,13 +6,13 @@ import CardContent from './CardContent'
 import Typography from '@material-ui/core/Typography'
 import Button from './Button'
 import { ResponsiveLine } from '@nivo/line'
-import { TrainingProgressMessage } from '../web-worker/protocol';
+import { TrainingProgressMessage } from '../web-worker/protocol'
 
 export type TrainDialogProps = any
 
 // TODO this will get moved to the results/eval dialog later
 type TrainDialogState = {
-  epochAndYMetric: { x: number, y: number }[]
+  epochAndYMetric: { x: number; y: number }[]
   doneTraining: boolean
 }
 
@@ -44,9 +44,10 @@ export default class TrainDialog extends React.Component<
   trainingCallback = (snapshot: TrainingProgressMessage) => {
     console.log(snapshot)
     this.setState(state => {
-      state.epochAndYMetric.push(
-        { x: snapshot.epoch, y: snapshot.agent.meanPerformance }
-      )
+      state.epochAndYMetric.push({
+        x: snapshot.epoch,
+        y: snapshot.agent.meanPerformance,
+      })
       return { epochAndYMetric: state.epochAndYMetric }
     })
   }
@@ -72,34 +73,34 @@ export default class TrainDialog extends React.Component<
               },
             ]}
             xScale={{
-              "type": "point"
+              type: 'point',
             }}
             yScale={{
-              "type": "linear",
-              "stacked": false,
-              "min": "auto",
-              "max": "auto"
+              type: 'linear',
+              stacked: false,
+              min: 'auto',
+              max: 'auto',
             }}
             minY="auto"
             maxY="auto"
             curve="natural"
             axisBottom={{
-              "orient": "bottom",
-              "tickSize": 5,
-              "tickPadding": 5,
-              "tickRotation": 0,
-              "legend": "epochs",
-              "legendOffset": 36,
-              "legendPosition": "center"
+              orient: 'bottom',
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'epochs',
+              legendOffset: 36,
+              legendPosition: 'center',
             }}
             axisLeft={{
-              "orient": "left",
-              "tickSize": 5,
-              "tickPadding": 5,
-              "tickRotation": 0,
-              "legend": "average score",
-              "legendOffset": -40,
-              "legendPosition": "center"
+              orient: 'left',
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'average score',
+              legendOffset: -40,
+              legendPosition: 'center',
             }}
             dotSize={10}
             dotColor="inherit:darker(0.3)"
@@ -113,29 +114,29 @@ export default class TrainDialog extends React.Component<
             motionDamping={15}
             legends={[
               {
-                "anchor": "bottom-right",
-                "direction": "column",
-                "justify": false,
-                "translateX": 100,
-                "translateY": 0,
-                "itemsSpacing": 0,
-                "itemDirection": "left-to-right",
-                "itemWidth": 80,
-                "itemHeight": 20,
-                "itemOpacity": 0.75,
-                "symbolSize": 12,
-                "symbolShape": "circle",
-                "symbolBorderColor": "rgba(0, 0, 0, .5)",
-                "effects": [
+                anchor: 'bottom-right',
+                direction: 'column',
+                justify: false,
+                translateX: 100,
+                translateY: 0,
+                itemsSpacing: 0,
+                itemDirection: 'left-to-right',
+                itemWidth: 80,
+                itemHeight: 20,
+                itemOpacity: 0.75,
+                symbolSize: 12,
+                symbolShape: 'circle',
+                symbolBorderColor: 'rgba(0, 0, 0, .5)',
+                effects: [
                   {
-                    "on": "hover",
-                    "style": {
-                      "itemBackground": "rgba(0, 0, 0, .03)",
-                      "itemOpacity": 1
-                    }
-                  }
-                ]
-              }
+                    on: 'hover',
+                    style: {
+                      itemBackground: 'rgba(0, 0, 0, .03)',
+                      itemOpacity: 1,
+                    },
+                  },
+                ],
+              },
             ]}
           />
         </CardContent>
