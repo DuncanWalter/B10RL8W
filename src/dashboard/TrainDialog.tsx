@@ -6,23 +6,24 @@ import CardContent from './CardContent'
 import Typography from '@material-ui/core/Typography'
 import Button from './Button'
 import { ResponsiveLine } from '@nivo/line'
+import { TrainingProgressMessage } from '../web-worker/protocol';
 
 export type TrainDialogProps = any
 
 // TODO this will get moved to the results/eval dialog later
 type TrainDialogState = {
-  epoch: number
+  epochAndYMetric: { x: number, y: number }[]
   doneTraining: boolean
 }
 
 export default class TrainDialog extends React.Component<
   TrainDialogProps,
   TrainDialogState
-> {
+  > {
   constructor(props: TrainDialogProps) {
     super(props)
     this.state = {
-      epoch: 0,
+      epochAndYMetric: [],
       doneTraining: false,
     }
   }
@@ -30,7 +31,7 @@ export default class TrainDialog extends React.Component<
   callTrainAgent = () => {
     const agentName = 'Fred'
     const agentType = 'contextless'
-    const epochs = 10
+    const epochs = 500
     const onProgress = this.trainingCallback
     const simplified = true
     trainAgent({ agentName, agentType, epochs, onProgress, simplified }).then(
@@ -40,37 +41,101 @@ export default class TrainDialog extends React.Component<
     )
   }
 
-  trainingCallback = (snapshot: { epoch: number }) => {
+  trainingCallback = (snapshot: TrainingProgressMessage) => {
     console.log(snapshot)
-    this.setState(state => ({ epoch: Math.max(snapshot.epoch, state.epoch) }))
+    this.setState(state => {
+      state.epochAndYMetric.push(
+        { x: snapshot.epoch, y: snapshot.agent.meanPerformance }
+      )
+      return { epochAndYMetric: state.epochAndYMetric }
+    })
   }
 
   render() {
-    const { epoch, doneTraining } = this.state
+    const { epochAndYMetric, doneTraining } = this.state
     const doneMessage = doneTraining ? (
       <CardContent>
         <Typography variant="body1">We have completed training!</Typography>
       </CardContent>
     ) : (
-      undefined
-    )
+        undefined
+      )
     return (
       <Card>
         <CardHeader>Train New Agent</CardHeader>
-        <CardContent>
-          <Typography variant="body1">Current epoch number: {epoch}</Typography>
-        </CardContent>
         <CardContent style={{ height: '400px' }}>
           <ResponsiveLine
             data={[
               {
                 id: 'main',
-                data: [{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 6 }],
+                data: epochAndYMetric,
               },
+            ]}
+            xScale={{
+              "type": "point"
+            }}
+            yScale={{
+              "type": "linear",
+              "stacked": false,
+              "min": "auto",
+              "max": "auto"
+            }}
+            minY="auto"
+            maxY="auto"
+            curve="natural"
+            axisBottom={{
+              "orient": "bottom",
+              "tickSize": 5,
+              "tickPadding": 5,
+              "tickRotation": 0,
+              "legend": "epochs",
+              "legendOffset": 36,
+              "legendPosition": "center"
+            }}
+            axisLeft={{
+              "orient": "left",
+              "tickSize": 5,
+              "tickPadding": 5,
+              "tickRotation": 0,
+              "legend": "average score",
+              "legendOffset": -40,
+              "legendPosition": "center"
+            }}
+            dotSize={10}
+            dotColor="inherit:darker(0.3)"
+            dotBorderWidth={2}
+            dotBorderColor="#ffffff"
+            enableDotLabel={true}
+            dotLabel="y"
+            dotLabelYOffset={-12}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+            legends={[
               {
-                id: 'non',
-                data: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 2 }],
-              },
+                "anchor": "bottom-right",
+                "direction": "column",
+                "justify": false,
+                "translateX": 100,
+                "translateY": 0,
+                "itemsSpacing": 0,
+                "itemDirection": "left-to-right",
+                "itemWidth": 80,
+                "itemHeight": 20,
+                "itemOpacity": 0.75,
+                "symbolSize": 12,
+                "symbolShape": "circle",
+                "symbolBorderColor": "rgba(0, 0, 0, .5)",
+                "effects": [
+                  {
+                    "on": "hover",
+                    "style": {
+                      "itemBackground": "rgba(0, 0, 0, .03)",
+                      "itemOpacity": 1
+                    }
+                  }
+                ]
+              }
             ]}
           />
         </CardContent>
