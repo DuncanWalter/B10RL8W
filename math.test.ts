@@ -72,12 +72,15 @@ test('some fast tooling for generating alternatives to SELU', () => {
       for (let mu = 0; mu <= 2; mu += 0.1) {
         for (let sigma = 0.2; sigma <= 5; sigma *= 1.25) {
           let m = integral(x => f((x + mu) * sigma) * n(x))
-          if (m - mu > 0 === mu > 0) {
-            m *= 2
+          if (m - mu > 0 === mu > 0 && m - mu < 0 === mu < 0) {
+            m = Math.abs(m) + 1
           }
           let s = 1 - integral(x => f((x + mu) * sigma) ** 2 * n(x))
-          if (s / sigma > 1 === sigma > 1) {
-            s *= 2
+          if (
+            (1 + s) / sigma > 1 === sigma > 1 &&
+            (1 + s) / sigma < 1 === sigma < 1
+          ) {
+            s = Math.abs(s) + 1
           }
           e += m * m + s * s
         }
@@ -93,7 +96,7 @@ test('some fast tooling for generating alternatives to SELU', () => {
     return best
   }
 
-  const { a, b, c } = solve(0, 1.8, 0.1, 0.1, 0.1, 0.9)
+  const { a, b, c } = solve(0, 1.8, 0.1, 0.2, 0.1, 1.5)
 
   console.log('best', a.toFixed(5), b.toFixed(5), c.toFixed(5))
   // const f = activation(a, b)
