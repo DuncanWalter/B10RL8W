@@ -18,8 +18,8 @@ test('Combinatorics are producing expected results', () => {
 
 test('Evaluating a random agents gives a baseline score', () => {
   let randy = createRandomAgent()
+  let hugo = createHeuristicAgent()
   const simplified = false
-  let hugo = createHeuristicAgent(simplified)
   const expectedScore = simplified ? 3.25 : 6.5
   const [{ meanScore: a }, { meanScore: b }] = evaluateAgents(
     [randy, hugo],

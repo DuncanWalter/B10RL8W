@@ -7,6 +7,8 @@ import {
   trickWinner,
 } from '../simulator'
 import { playerWithCard } from '../simulator/simulator'
+import '../utils/arrayGenerate'
+import { range } from '../utils/range'
 
 export type GameSummary<L extends number> = {
   size: L
@@ -68,31 +70,33 @@ export const trickSummary: GameSummary<5> = {
 
 /** the summary of the action gives the agent:
  *  the suit of the card the agent is playing,
- *  the rank of the card the agent is playing */
-export const actionSummary: GameSummary<5> = {
-  size: 5,
+ *  the rank of the card the agent is playing
+ *  the points of the card being played*/
+export const actionSummary: GameSummary<6> = {
+  size: 6,
   summary(state: State, player: Player, action: Card) {
     return [
       ...(Object.keys(suits) as (keyof typeof suits)[]).map(suit => {
         return action.suit === suits[suit] ? 1 : 0
       }),
       action.rank,
+      cardPoints(action, state.simplified),
     ]
   },
 }
 
 /** the summary of the game's points and rules gives the agent:
- *  the agent's score,
- *  the total score,
- *  whether or not hearts has been broken,
+ *  the agent's current score,
+ *  the points yet to be taken this game,
+ *  whether or not hearts have been broken,
  *  whether or not the queen is still in the game
  *  whether or not the agent has the queen */
 export const ruleSummary: GameSummary<5> = {
   size: 5,
   summary(state: State, player: Player, action: Card) {
-    let totalScore = 0
+    let totalScore = state.simplified ? 13 : 26
     for (let { score } of state.players) {
-      totalScore += score
+      totalScore -= score
     }
 
     let queenTaken = 1
@@ -125,22 +129,42 @@ function isQueenOfSpades(card: Card) {
 }
 
 /** keeps track of the cards that have not yet been played
- *  (still in someone's hand) */
-export const cardSummary: GameSummary<52> = {
-  size: 52,
+ *  (still in someone's hand) in the condensed format
+ * used by the hand summary */
+export const cardSummary: GameSummary<12> = {
+  size: 12,
   summary(state: State, player: Player, action: Card) {
+    const unplayed = state.players.generate(player => player.hand)
     const [hearts, spades, clubs, diamonds] = [0, 1, 2, 3].map(suit => {
-      var ranks = new Array(13).fill(0)
-      state.players.forEach(agent => {
-        agent.hand.forEach(card => {
-          if (card.suit === suit) {
-            ranks[card.rank - 2] = 1 //lowest rank is 2 so subtract 2
-          }
-        })
+      let count = 0
+      let min = 14
+      let max = 2
+      unplayed.forEach(card => {
+        if (card.suit === suit) {
+          count++
+          max = Math.max(max, card.rank)
+          min = Math.min(min, card.rank)
+        }
       })
-      return ranks
+      return [count, min, max]
     })
     return [...hearts, ...spades, ...clubs, ...diamonds]
+  },
+}
+
+/**
+ * Keeps track of whether the agents knows if an opponent is out of a particular
+ * suit based on whether they have played out of suit. Seating is relative to
+ * agent.
+ */
+export const opponentSummary: GameSummary<12> = {
+  size: 12,
+  summary(state: State, player: Player, action: Card) {
+    const start = state.players.indexOf(player)
+    return [...range(1, 4)]
+      .map(i => (i + start) % 4)
+      .map(i => state.players[i])
+      .generate(({ playsOutOfSuit }) => playsOutOfSuit.map(b => (b ? 1 : 0)))
   },
 }
 

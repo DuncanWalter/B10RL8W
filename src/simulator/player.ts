@@ -32,18 +32,20 @@ export type Player<F = any> = {
   hand: Card[]
   score: number
   policy: Policy<F>
+  playsOutOfSuit: [boolean, boolean, boolean, boolean]
   assignReward(reward: number): void
   recordAction(state: State, action: Card, quality: number, trace: F): void
   terminate(): History<F>[]
 }
 
-export function createPlayer<F>(policy: Policy<F>, hand: Card[]) {
+export function createPlayer<F>(policy: Policy<F>, hand: Card[]): Player<F> {
   let pendingReward = 0
   let history = [] as History<F>[]
   return {
     hand,
     score: 0,
     policy,
+    playsOutOfSuit: [false, false, false, false],
     assignReward(reward: number) {
       pendingReward += reward
     },

@@ -26,5 +26,12 @@ export { FeedBack, interpretHistory } from './history'
 export { trainAgent } from './training'
 export { evaluateAgents } from './evaluating'
 
-export { createRandomAgent } from './random'
-export { createAgent } from './createAgents'
+export { randomAgent, createRandomAgent } from './random'
+export { heuristicAgent, createHeuristicAgent } from './heuristic'
+export {
+  createAgent,
+  contextlessSummary,
+  ruleTrackingSummary,
+  cardCountingSummary,
+  cardSharkSummary,
+} from './createAgents'

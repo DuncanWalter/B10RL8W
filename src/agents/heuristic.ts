@@ -9,45 +9,30 @@ import {
 } from '../simulator'
 import { Agent } from '.'
 
-export function createHeuristicAgent(
-  simplified: boolean,
-): Agent<null, 'heuristic'> {
+export function createHeuristicAgent(): Agent<null, 'heuristic'> {
   return {
     type: 'heuristic',
     policy(state: State, player: Player, actions: Card[]) {
       const possibleMoves = validPlays(state, player.hand)
-      const possiblePoints = trickPoints(state.trick, simplified)
-      const winningMoves = possibleMoves.filter(card => {
-        return (
+      const currentPoints = trickPoints(state.trick, state.simplified)
+      const goodMoves = possibleMoves.filter(card => {
+        const leadsTrick =
           card ===
           trickWinner({
             suit: state.trick.suit,
             cards: [card, ...state.trick.cards],
           })
-        )
+        const additionalPoints = cardPoints(card, state.simplified)
+        const projectedPoints = currentPoints + additionalPoints
+        const safePlay = !(leadsTrick && projectedPoints > 0)
+        return safePlay && state.trick.cards.length !== 0
       })
-      const losingMoves = possibleMoves.filter(card => {
-        return (
-          card !==
-          trickWinner({
-            suit: state.trick.suit,
-            cards: [card, ...state.trick.cards],
-          })
-        )
-      })
-
-      const goodMoves = [
-        ...winningMoves.filter(card => {
-          return possiblePoints + cardPoints(card, simplified) === 0
-        }),
-        ...losingMoves,
-      ]
 
       return actions.map(action => {
         if (goodMoves.includes(action)) {
           return {
             action,
-            quality: action.rank + 2 * cardPoints(action, simplified),
+            quality: action.rank + 2 * cardPoints(action, state.simplified),
             trace: null,
           }
         } else {
@@ -70,3 +55,5 @@ export function createHeuristicAgent(
     },
   }
 }
+
+export const heuristicAgent = createHeuristicAgent()

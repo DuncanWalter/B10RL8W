@@ -7,7 +7,10 @@ import {
 } from './createAgents'
 import { trainAgent } from './training'
 import { evaluateAgents } from './evaluating'
-import { createRandomAgent } from './random'
+import { randomAgent } from './random'
+import { heuristicAgent } from './heuristic'
+
+jest.setTimeout(1000000000)
 
 test(`Contextless agents can be trained`, done => {
   const timmy = createAgent(contextlessSummary)
@@ -17,21 +20,25 @@ test(`Contextless agents can be trained`, done => {
   trainAgent(
     timmy,
     2,
-    true,
+    false,
     (epoch, mean, stdDev) => {
       m += mean
       s += stdDev
-      if (epoch % g === g - 1) {
+      if (epoch % g === 0) {
         // console.log(
         //   `epoch ${epoch}: \tmean ${(((10 * m) / g) | 0) /
         //     10} \tstdDev ${(((10 * s) / g) | 0) / 10}`,
         // )
         m = 0
         s = 0
-        // console.log(evaluateAgents([timmy, createRandomAgent()], 500, false))
       }
     },
-    done,
+    () => {
+      // console.log(
+      //   evaluateAgents([timmy, randomAgent, heuristicAgent], 500, false),
+      // )
+      done()
+    },
   )
 })
 
@@ -54,7 +61,6 @@ test(`Rule Tracking agents can be trained`, done => {
         // )
         m = 0
         s = 0
-        // console.log(evaluateAgents([regina, createRandomAgent()], 500, false))
       }
     },
     done,
@@ -80,7 +86,6 @@ test(`Card Counting agents can be trained`, done => {
         // )
         m = 0
         s = 0
-        // console.log(evaluateAgents([dracula, createRandomAgent()], 500, false))
       }
     },
     done,
@@ -106,7 +111,6 @@ test(`Card Shark agents can be trained`, done => {
         // )
         m = 0
         s = 0
-        // console.log(evaluateAgents([james, createRandomAgent()], 500, false))
       }
     },
     done,
