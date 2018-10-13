@@ -1,5 +1,7 @@
 const { spawn } = require('child_process')
-const { watch } = require('fs')
+const { watch, ensureFileSync } = require('fs-extra')
+
+ensureFileSync('./build/main.js')
 
 let server
 watch('./build/main.js', () => {
