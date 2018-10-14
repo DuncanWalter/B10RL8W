@@ -6,21 +6,41 @@ const buttonStyles = {
   padding: '8px 16px 8px',
   cursor: 'pointer',
   color: 'rgba(255, 255, 255, 0.96)',
-  backgroundColor: '#5577cc',
   display: 'inline-block',
   borderRadius: '4px',
   transition: '0.2s',
 }
 
-const hoveredStyles = {
-  ...buttonStyles,
-  backgroundColor: 'rgba(85, 119, 221, 0.8)',
+const buttonMixins = {
+  primary: {
+    hovered: {
+      backgroundColor: 'rgba(85, 119, 204, 0.8)',
+    },
+    normal: {
+      backgroundColor: '#5577cc',
+    },
+  },
+  danger: {
+    hovered: {
+      backgroundColor: 'rgba(251, 81, 132, 0.8)',
+    },
+    normal: {
+      backgroundColor: '#fb5184',
+    },
+  },
+  disabled: {
+    cursor: 'not-allowed',
+    color: 'rgba(64, 64, 64, 0.96)',
+    backgroundColor: '#aaaaad',
+  },
 }
 
 export default class Button extends React.Component<
   {
     text?: string
     onClick?: () => unknown
+    disabled?: boolean
+    variant?: 'primary' | 'danger'
   },
   { hovered: boolean }
 > {
@@ -29,14 +49,24 @@ export default class Button extends React.Component<
     this.state = { hovered: false }
   }
   render() {
-    const { text, onClick } = this.props
+    const { text, onClick, disabled = false, variant = 'primary' } = this.props
     const { hovered } = this.state
+    const mixin = disabled
+      ? buttonMixins.disabled
+      : buttonMixins[variant][hovered ? 'hovered' : 'normal']
+    const style = {
+      ...buttonStyles,
+      ...mixin,
+    }
+
     return (
       <div
-        style={hovered ? hoveredStyles : buttonStyles}
-        onClick={onClick}
+        style={style}
+        onClick={disabled ? () => {} : onClick}
         onMouseEnter={() => {
-          this.setState({ hovered: true })
+          if (!disabled) {
+            this.setState({ hovered: true })
+          }
         }}
         onMouseLeave={() => {
           this.setState({ hovered: false })
