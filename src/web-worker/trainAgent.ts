@@ -1,9 +1,18 @@
-import { trainAgent, createAgent, Agent, createRandomAgent } from '../agents'
+import {
+  trainAgent,
+  createAgent,
+  Agent,
+  createRandomAgent,
+  contextlessSummary,
+  ruleTrackingSummary,
+  cardCountingSummary,
+  cardSharkSummary,
+  cardGuruSummary,
+} from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
-import { contextlessSummary } from '../agents/createAgents'
 
 export function trainNewAgent({
   agentType,
@@ -17,6 +26,22 @@ export function trainNewAgent({
       trainingAgent = createAgent(contextlessSummary)
       break
     }
+    case 'rule-tracking': {
+      trainingAgent = createAgent(ruleTrackingSummary)
+      break
+    }
+    case 'card-counting': {
+      trainingAgent = createAgent(cardCountingSummary)
+      break
+    }
+    case 'card-shark': {
+      trainingAgent = createAgent(cardSharkSummary)
+      break
+    }
+    case 'guru': {
+      trainingAgent = createAgent(cardGuruSummary)
+      break
+    }
     default: {
       throw new Error('Unrecognized agent type')
     }
@@ -25,7 +50,7 @@ export function trainNewAgent({
   let additionalEpochsTrained = 0
 
   const randy = createRandomAgent()
-  const hugo = createHeuristicAgent(simplified)
+  const hugo = createHeuristicAgent()
 
   return trainAgent(
     trainingAgent,
@@ -34,10 +59,10 @@ export function trainNewAgent({
     epoch => {
       additionalEpochsTrained += 1
 
-      if (epoch === 1 || epoch % 5 === 0 || epoch === epochs) {
+      if (epoch === 1 || epoch % 100 === 0 || epoch === epochs) {
         const [agent, random, heuristic] = evaluateAgents(
           [trainingAgent, randy, hugo],
-          150,
+          500,
           simplified,
         )
         postMessage({

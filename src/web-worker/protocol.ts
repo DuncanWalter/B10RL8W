@@ -3,7 +3,12 @@ export type TrainCommand = {
   agentName: string
   epochs: number
   simplified: boolean
-  agentType: 'contextless' | 'card-counting' | 'rule-tracking' | 'complete'
+  agentType:
+    | 'contextless'
+    | 'card-counting'
+    | 'rule-tracking'
+    | 'card-shark'
+    | 'guru'
 }
 
 export type CancelCommand = {

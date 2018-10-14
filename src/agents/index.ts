@@ -14,9 +14,9 @@ export type Agent<F = unknown, T = string> = {
   train: (
     feedBack: FeedBack<F>[],
   ) => {
-    meanLoss: number
-    stdDevLoss: number
-  }
+      meanLoss: number
+      stdDevLoss: number
+    }
   serialize: () => string
   type: T
 }
@@ -34,4 +34,5 @@ export {
   ruleTrackingSummary,
   cardCountingSummary,
   cardSharkSummary,
+  cardGuruSummary,
 } from './createAgents'
