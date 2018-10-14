@@ -3,15 +3,16 @@ import {
   createAgent,
   Agent,
   createRandomAgent,
+  contextlessSummary,
   ruleTrackingSummary,
   cardCountingSummary,
   cardSharkSummary,
+  cardGuruSummary,
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
-import { contextlessSummary, cardGuruSummary } from '../agents/createAgents'
 
 export function trainNewAgent({
   agentType,

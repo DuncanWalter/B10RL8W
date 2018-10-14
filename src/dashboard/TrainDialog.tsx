@@ -10,7 +10,6 @@ import SplinePlot from './SplinePlot'
 
 export type TrainDialogProps = any
 
-// TODO this will get moved to the results/eval dialog later
 export type TrainDialogState = {
   epochAndYMetric: { x: number; y: number; yDev: number }[]
   doneTraining: boolean
@@ -30,7 +29,7 @@ export default class TrainDialog extends React.Component<
 
   callTrainAgent = () => {
     const agentName = 'Fred'
-    const agentType = 'card-counting'
+    const agentType = 'guru'
     const epochs = 9000
     const onProgress = this.trainingCallback
     const simplified = false
@@ -46,8 +45,8 @@ export default class TrainDialog extends React.Component<
     this.setState(state => {
       state.epochAndYMetric.push({
         x: snapshot.epoch,
-        y: parseFloat(snapshot.agent.meanScore.toPrecision(4)),
-        yDev: snapshot.agent.stdDevScore,
+        y: parseFloat(snapshot.agent.meanPerformance.toPrecision(4)),
+        yDev: snapshot.agent.stdDevPerformance,
       })
       return { epochAndYMetric: state.epochAndYMetric }
     })
@@ -94,8 +93,12 @@ export default class TrainDialog extends React.Component<
             fontFamily: 'sans-serif',
           }}
         >
-          <SplinePlot data={data} minY={3} maxY={10}
-            yAxisTitle={"average score"} />
+          <SplinePlot
+            data={data}
+            minY={-0.7}
+            maxY={0.7}
+            yAxisTitle={'average performance'}
+          />
         </CardContent>
         {doneMessage}
         <CardContent style={{ display: 'flex', justifyContent: 'flex-end' }}>

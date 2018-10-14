@@ -133,7 +133,7 @@ export default class SplinePlot extends React.Component<SplineProps> {
           legendOffset: -50,
           legendPosition: 'center',
         }}
-        colorBy={function (e: any) {
+        colorBy={function(e: any) {
           return e.color
         }}
         enableGridX={false}
