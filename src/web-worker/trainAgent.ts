@@ -1,6 +1,11 @@
 import {
-  trainAgent, createAgent, Agent, createRandomAgent,
-  ruleTrackingSummary, cardCountingSummary, cardSharkSummary
+  trainAgent,
+  createAgent,
+  Agent,
+  createRandomAgent,
+  ruleTrackingSummary,
+  cardCountingSummary,
+  cardSharkSummary,
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
@@ -56,7 +61,7 @@ export function trainNewAgent({
       if (epoch === 1 || epoch % 100 === 0 || epoch === epochs) {
         const [agent, random, heuristic] = evaluateAgents(
           [trainingAgent, randy, hugo],
-          150,
+          500,
           simplified,
         )
         postMessage({

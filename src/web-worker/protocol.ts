@@ -3,8 +3,12 @@ export type TrainCommand = {
   agentName: string
   epochs: number
   simplified: boolean
-  agentType: 'contextless' | 'card-counting' | 'rule-tracking'
-  | 'card-shark' | 'guru'
+  agentType:
+    | 'contextless'
+    | 'card-counting'
+    | 'rule-tracking'
+    | 'card-shark'
+    | 'guru'
 }
 
 export type CancelCommand = {
@@ -42,5 +46,5 @@ export type DoneMessage = {
 export type Message = TrainingProgressMessage | DoneMessage
 
 export function postMessage(message: Message) {
-  ; (self as any).postMessage(JSON.stringify(message))
+  ;(self as any).postMessage(JSON.stringify(message))
 }
