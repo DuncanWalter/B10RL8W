@@ -25,7 +25,7 @@ export function trainNewAgent({
   let additionalEpochsTrained = 0
 
   const randy = createRandomAgent()
-  const hugo = createHeuristicAgent(simplified)
+  const hugo = createHeuristicAgent()
 
   return trainAgent(
     trainingAgent,
@@ -34,7 +34,7 @@ export function trainNewAgent({
     epoch => {
       additionalEpochsTrained += 1
 
-      if (epoch === 1 || epoch % 5 === 0 || epoch === epochs) {
+      if (epoch === 1 || epoch % 20 === 0 || epoch === epochs) {
         const [agent, random, heuristic] = evaluateAgents(
           [trainingAgent, randy, hugo],
           150,
