@@ -1,9 +1,12 @@
-import { trainAgent, createAgent, Agent, createRandomAgent } from '../agents'
+import {
+  trainAgent, createAgent, Agent, createRandomAgent,
+  ruleTrackingSummary, cardCountingSummary, cardSharkSummary
+} from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
-import { contextlessSummary } from '../agents/createAgents'
+import { contextlessSummary, cardGuruSummary } from '../agents/createAgents'
 
 export function trainNewAgent({
   agentType,
@@ -15,6 +18,22 @@ export function trainNewAgent({
   switch (agentType) {
     case 'contextless': {
       trainingAgent = createAgent(contextlessSummary)
+      break
+    }
+    case 'rule-tracking': {
+      trainingAgent = createAgent(ruleTrackingSummary)
+      break
+    }
+    case 'card-counting': {
+      trainingAgent = createAgent(cardCountingSummary)
+      break
+    }
+    case 'card-shark': {
+      trainingAgent = createAgent(cardSharkSummary)
+      break
+    }
+    case 'guru': {
+      trainingAgent = createAgent(cardGuruSummary)
       break
     }
     default: {
@@ -34,7 +53,7 @@ export function trainNewAgent({
     epoch => {
       additionalEpochsTrained += 1
 
-      if (epoch === 1 || epoch % 20 === 0 || epoch === epochs) {
+      if (epoch === 1 || epoch % 100 === 0 || epoch === epochs) {
         const [agent, random, heuristic] = evaluateAgents(
           [trainingAgent, randy, hugo],
           150,

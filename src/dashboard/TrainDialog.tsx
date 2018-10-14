@@ -31,9 +31,9 @@ export default class TrainDialog extends React.Component<
   callTrainAgent = () => {
     const agentName = 'Fred'
     const agentType = 'contextless'
-    const epochs = 500
+    const epochs = 5000
     const onProgress = this.trainingCallback
-    const simplified = true
+    const simplified = false
     trainAgent({ agentName, agentType, epochs, onProgress, simplified }).then(
       () => {
         this.setState({ doneTraining: true })
@@ -94,7 +94,7 @@ export default class TrainDialog extends React.Component<
             fontFamily: 'sans-serif',
           }}
         >
-          <SplinePlot data={data} minY={0} maxY={5} />
+          <SplinePlot data={data} minY={3} maxY={10} />
         </CardContent>
         {doneMessage}
         <CardContent style={{ display: 'flex', justifyContent: 'flex-end' }}>

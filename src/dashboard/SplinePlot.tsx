@@ -7,8 +7,8 @@ export type SplineProps = {
     data: { x: number; y: number }[]
     color: string
   }[]
-  minY: number,
-  maxY: number,
+  minY: number
+  maxY: number
 }
 
 const defaultTextColor = '#000000'
@@ -103,7 +103,7 @@ export default class SplinePlot extends React.Component<SplineProps> {
           left: 60,
         }}
         xScale={{
-          type: 'point',
+          type: 'linear', min: 0, max: 'auto'
         }}
         yScale={{
           type: 'linear',
@@ -130,7 +130,11 @@ export default class SplinePlot extends React.Component<SplineProps> {
           legendOffset: -50,
           legendPosition: 'center',
         }}
-        colorBy={function (e: any) { return e.color }}
+        colorBy={
+          function (e: any) {
+            return e.color
+          }
+        }
         enableGridX={false}
         lineWidth={4}
         enableDots={false}
