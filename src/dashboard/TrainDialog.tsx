@@ -20,7 +20,7 @@ export type Line = {
   lines: {
     color: string
     data: Point[]
-    id?: string
+    id: string
   }[]
   append(x: number, y: number, d: number): void
 }
@@ -29,6 +29,7 @@ function line(id: string, color: string, errorColor: string): Line {
   return {
     lines: [
       {
+        id: `min: ${id}`,
         color: errorColor,
         data: [],
       },
@@ -38,6 +39,7 @@ function line(id: string, color: string, errorColor: string): Line {
         data: [],
       },
       {
+        id: `max: ${id}`,
         color: errorColor,
         data: [],
       },
