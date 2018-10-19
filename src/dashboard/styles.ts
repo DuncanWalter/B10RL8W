@@ -10,7 +10,7 @@ export const styles = createStyles({
     padding: '48px',
     alignItems: 'start',
     justifyContent: 'space-around',
-    height: '100vh',
+    minHeight: '100vh',
     boxSizing: 'border-box',
   },
   appBar: {

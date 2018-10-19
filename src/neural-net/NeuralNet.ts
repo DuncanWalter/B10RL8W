@@ -8,12 +8,14 @@ import {
 
 export default class NeuralNet {
   learningRate: number
+  learningDecay: number
   inputSize: number
   transform: UniformTransformation<any>
 
   constructor(
     config: {
       learningRate: number
+      learningDecay?: number
       inputSize: number
       serializedContent?: string
     },
@@ -21,6 +23,7 @@ export default class NeuralNet {
   ) {
     this.inputSize = config.inputSize
     this.learningRate = config.learningRate
+    this.learningDecay = config.learningDecay || 1
     this.transform = regularize(
       pipeTransform(...transformFactories)({
         size: config.inputSize,
@@ -46,6 +49,7 @@ export default class NeuralNet {
       // rowZip(mean, inputError, (a, b) => a + b, mean)
     }
     this.transform.applyLearning(1 / feedBack.length)
+    this.learningRate *= this.learningDecay
     // return { heat, mean }
   }
 

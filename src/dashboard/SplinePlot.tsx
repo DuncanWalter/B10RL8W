@@ -7,8 +7,8 @@ export type SplineProps = {
     data: { x: number; y: number }[]
     color: string
   }[]
-  minY: number
-  maxY: number
+  minY?: number
+  maxY?: number
   yAxisTitle: string
 }
 
@@ -93,15 +93,16 @@ const theme = {
 
 export default class SplinePlot extends React.Component<SplineProps> {
   render() {
+    const { data, minY, maxY } = this.props
     return (
       <ResponsiveLine
         theme={theme}
-        data={this.props.data}
+        data={data}
         margin={{
-          top: 50,
-          right: 50,
-          bottom: 60,
-          left: 60,
+          top: 4,
+          right: 48,
+          bottom: 80,
+          left: 64,
         }}
         xScale={{
           type: 'linear',
@@ -111,8 +112,8 @@ export default class SplinePlot extends React.Component<SplineProps> {
         yScale={{
           type: 'linear',
           stacked: false,
-          min: this.props.minY,
-          max: this.props.maxY,
+          min: minY !== undefined ? minY : 'auto',
+          max: maxY !== undefined ? maxY : 'auto',
         }}
         curve="monotoneX"
         axisBottom={{
@@ -137,7 +138,7 @@ export default class SplinePlot extends React.Component<SplineProps> {
           return e.color
         }}
         enableGridX={false}
-        lineWidth={4}
+        lineWidth={3}
         enableDots={false}
         animate={true}
         motionStiffness={250}

@@ -67,7 +67,8 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   }
   const net = new NeuralNet(
     {
-      learningRate: 0.01,
+      learningRate: 0.02,
+      learningDecay: 0.5 ** (1 / 2500),
       inputSize: agentSummary.size,
     },
     guardTransform(),

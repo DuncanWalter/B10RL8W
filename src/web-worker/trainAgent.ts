@@ -14,6 +14,9 @@ import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
 
+const evalBatchSize = 100
+const epochStepSize = 25
+
 export function trainNewAgent({
   agentType,
   agentName,
@@ -48,21 +51,41 @@ export function trainNewAgent({
   }
 
   let additionalEpochsTrained = 0
+  let loss = NaN
 
   const randy = createRandomAgent()
   const hugo = createHeuristicAgent()
+
+  const [agent, random, heuristic] = evaluateAgents(
+    [trainingAgent, randy, hugo],
+    evalBatchSize,
+    simplified,
+  )
+
+  postMessage({
+    type: 'training-progress',
+    epoch: 0,
+    agent,
+    random,
+    heuristic,
+    agentLoss: NaN,
+  })
 
   return trainAgent(
     trainingAgent,
     epochs,
     simplified,
-    epoch => {
+    (epoch, error) => {
       additionalEpochsTrained += 1
+      loss =
+        loss !== loss
+          ? error
+          : (1 - 1 / epochStepSize) * loss + error / epochStepSize
 
-      if (epoch === 1 || epoch % 100 === 0 || epoch === epochs) {
+      if (epoch % epochStepSize === 0 || epoch === epochs) {
         const [agent, random, heuristic] = evaluateAgents(
           [trainingAgent, randy, hugo],
-          500,
+          evalBatchSize,
           simplified,
         )
         postMessage({
@@ -71,6 +94,7 @@ export function trainNewAgent({
           agent,
           random,
           heuristic,
+          agentLoss: loss,
         })
       }
 
