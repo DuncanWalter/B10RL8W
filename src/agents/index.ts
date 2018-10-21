@@ -35,4 +35,4 @@ export {
   cardSharkSummary,
   cardGuruSummary,
 } from './createAgents'
-export { DQN } from './learningMethods'
+export { DQNLearning, QLearning, SARSALearning } from './learningMethods'

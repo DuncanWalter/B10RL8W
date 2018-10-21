@@ -5,7 +5,7 @@ import {
   cardCountingSummary,
   cardSharkSummary,
 } from './createAgents'
-import { DQN } from './learningMethods'
+import { DQNLearning, QLearning } from './learningMethods'
 import { trainAgent } from './training'
 import { evaluateAgents } from './evaluating'
 import { randomAgent } from './random'
@@ -14,7 +14,7 @@ import { heuristicAgent } from './heuristic'
 jest.setTimeout(1000000000)
 
 test(`Contextless agents can be trained`, done => {
-  const timmy = createAgent(contextlessSummary, DQN)
+  const timmy = createAgent(contextlessSummary, QLearning)
   let m = 0
   let s = 0
   let g = 100
@@ -44,7 +44,7 @@ test(`Contextless agents can be trained`, done => {
 })
 
 test(`Rule Tracking agents can be trained`, done => {
-  const regina = createAgent(ruleTrackingSummary, DQN)
+  const regina = createAgent(ruleTrackingSummary, DQNLearning)
   let m = 0
   let s = 0
   let g = 100
@@ -69,7 +69,7 @@ test(`Rule Tracking agents can be trained`, done => {
 })
 
 test(`Card Counting agents can be trained`, done => {
-  const dracula = createAgent(cardCountingSummary, DQN)
+  const dracula = createAgent(cardCountingSummary, DQNLearning)
   let m = 0
   let s = 0
   let g = 100
@@ -94,7 +94,7 @@ test(`Card Counting agents can be trained`, done => {
 })
 
 test(`Card Shark agents can be trained`, done => {
-  const james = createAgent(cardSharkSummary, DQN)
+  const james = createAgent(cardSharkSummary, DQNLearning)
   let m = 0
   let s = 0
   let g = 100

@@ -97,9 +97,9 @@ export function createAgent(
         }))
     },
     train(feedBack: FeedBack<unknown>[]) {
-      const learningResult = huberifiedLearningMethod(feedBack)
-      net.passBack(learningResult.map(({ error, trace }) => ({ error, trace })))
-      const loss = learningResult.map(({ loss }) => loss)
+      const learningUpdates = huberifiedLearningMethod(feedBack)
+      net.passBack(learningUpdates)
+      const loss = learningUpdates.map(({ loss }) => loss)
       const mean = loss.reduce((sum, loss) => sum + loss) / loss.length
       const variance =
         loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length

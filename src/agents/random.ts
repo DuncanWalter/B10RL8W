@@ -1,9 +1,8 @@
 import { Player, State, Card } from '../simulator'
 import { Agent } from '.'
 
-export function createRandomAgent(): Agent<null, 'random'> {
+export function createRandomAgent(): Agent<null> {
   return {
-    type: 'random',
     policy(state: State, player: Player, actions: Card[]) {
       return actions.map((action, index) => ({
         action,
