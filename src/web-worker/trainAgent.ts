@@ -8,6 +8,7 @@ import {
   cardCountingSummary,
   cardSharkSummary,
   cardGuruSummary,
+  DQN,
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
@@ -26,23 +27,23 @@ export function trainNewAgent({
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
-      trainingAgent = createAgent(contextlessSummary)
+      trainingAgent = createAgent(contextlessSummary, DQN)
       break
     }
     case 'rule-tracking': {
-      trainingAgent = createAgent(ruleTrackingSummary)
+      trainingAgent = createAgent(ruleTrackingSummary, DQN)
       break
     }
     case 'card-counting': {
-      trainingAgent = createAgent(cardCountingSummary)
+      trainingAgent = createAgent(cardCountingSummary, DQN)
       break
     }
     case 'card-shark': {
-      trainingAgent = createAgent(cardSharkSummary)
+      trainingAgent = createAgent(cardSharkSummary, DQN)
       break
     }
     case 'guru': {
-      trainingAgent = createAgent(cardGuruSummary)
+      trainingAgent = createAgent(cardGuruSummary, DQN)
       break
     }
     default: {

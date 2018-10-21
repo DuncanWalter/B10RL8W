@@ -33,7 +33,7 @@ export function trainAgent<F>(
   const randy = randomAgent.policy
   function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
-      [...range(50)].generate(() => {
+      [...range(6)].generate(() => {
         const [a, b, c] = playGame(
           [forceExploration(0.3, agent), hugo, hugo, hugo],
           simplified,

@@ -9,16 +9,15 @@ import { FeedBack } from './history'
  * be serialized for saving and loading purposes.
  */
 
-export type Agent<F = unknown, T = string> = {
+export type Agent<F = unknown> = {
   policy: Policy<F>
   train: (
     feedBack: FeedBack<F>[],
   ) => {
-      meanLoss: number
-      stdDevLoss: number
-    }
+    meanLoss: number
+    stdDevLoss: number
+  }
   serialize: () => string
-  type: T
 }
 
 export { FeedBack, interpretHistory } from './history'
@@ -36,3 +35,4 @@ export {
   cardSharkSummary,
   cardGuruSummary,
 } from './createAgents'
+export { DQN } from './learningMethods'

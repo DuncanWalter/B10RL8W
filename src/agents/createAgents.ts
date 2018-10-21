@@ -16,6 +16,7 @@ import {
   GameSummary,
   opponentSummary,
 } from './gameSummary'
+import { LearningMethod } from './learningMethods'
 
 export const contextlessSummary = joinSummaries(
   handSummary,
@@ -53,7 +54,10 @@ export const cardGuruSummary = joinSummaries(
   opponentSummary,
 )
 
-export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
+export function createAgent(
+  agentSummary: GameSummary<number>,
+  learningMethod: LearningMethod,
+): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > 6) {
@@ -65,6 +69,7 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   function huberLossGradient(expected: number, actual: number) {
     return Math.max(-6, Math.min(actual - expected, 6))
   }
+  const huberifiedLearningMethod = learningMethod(huberLoss, huberLossGradient)
   const net = new NeuralNet(
     {
       learningRate: 0.02,
@@ -81,7 +86,6 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
   )
 
   return {
-    type: 'contextless',
     policy(state: State, player: Player, actions: Card[]) {
       return actions
         .map(action => [...agentSummary.summary(state, player, action)])
@@ -93,15 +97,9 @@ export function createAgent(agentSummary: GameSummary<number>): Agent<unknown> {
         }))
     },
     train(feedBack: FeedBack<unknown>[]) {
-      net.passBack(
-        feedBack.map(({ expected, actual, trace }) => ({
-          error: [huberLossGradient(expected, actual)],
-          trace: trace,
-        })),
-      )
-      const loss = feedBack.map(({ actual, expected }) => {
-        return huberLoss(actual, expected)
-      })
+      const learningResult = huberifiedLearningMethod(feedBack)
+      net.passBack(learningResult.map(({ error, trace }) => ({ error, trace })))
+      const loss = learningResult.map(({ loss }) => loss)
       const mean = loss.reduce((sum, loss) => sum + loss) / loss.length
       const variance =
         loss.reduce((sum, loss) => sum + (loss - mean) ** 2) / loss.length
