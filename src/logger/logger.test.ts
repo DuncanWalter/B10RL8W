@@ -20,6 +20,7 @@ const testFileUpdate: LogUpdate = {
   simplified: true,
   additionalEpochsTrained: 1,
   serializedContent: 'null',
+  snapshots: [],
 }
 
 function testCreateLog(): Promise<void> {
