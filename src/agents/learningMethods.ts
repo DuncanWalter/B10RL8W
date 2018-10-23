@@ -8,8 +8,8 @@ export type LearningMethod = (
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ) => (
-  feedback: FeedBack<unknown>[],
-) => { error: number[]; trace: unknown; loss: number }[]
+    feedback: FeedBack<unknown>[],
+  ) => { error: number[]; trace: unknown; loss: number }[]
 
 /** Deep Q Network policy updating is an on-policy method
  * It compares the Q-Predictions of the Network for each action to the final reward at the end of the episode
@@ -20,8 +20,8 @@ export function DQNLearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-  feedback: FeedBack<unknown>[],
-) => { error: number[]; trace: unknown; loss: number }[] {
+    feedback: FeedBack<unknown>[],
+  ) => { error: number[]; trace: unknown; loss: number }[] {
   return (feedback: FeedBack<unknown>[]) => {
     return feedback.map(({ expected, actual, trace }) => ({
       error: [errorFnPrime(expected, actual)],
@@ -41,8 +41,8 @@ export function QLearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-  feedback: FeedBack<unknown>[],
-) => { error: number[]; trace: unknown; loss: number }[] {
+    feedback: FeedBack<unknown>[],
+  ) => { error: number[]; trace: unknown; loss: number }[] {
   return feedback =>
     feedback.scan(
       ({ initial, maxQ }, { expected, actual, trace, state, actor }) => {
@@ -82,9 +82,18 @@ export function SARSALearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-  feedback: FeedBack<unknown>[],
-) => { error: number[]; trace: unknown; loss: number }[] {
+    feedbacks: FeedBack<unknown>[],
+  ) => { error: number[]; trace: unknown; loss: number }[] {
   // recall that SARSA's update method is
   // Q(s, a) <- reward + Q(s', a')
-  return () => [] as { error: number[]; trace: unknown; loss: number }[]
+  return (feedbacks => {
+    return feedbacks.scan((next, current) => {
+      return {
+        expected: current.expected,
+        error: [errorFnPrime(current.expected, next.expected + current.reward)],
+        trace: current.trace,
+        loss: errorFn(current.expected, next.expected + current.reward),
+      }
+    }, { expected: 0 })
+  })
 }

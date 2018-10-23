@@ -5,7 +5,7 @@ import {
   cardCountingSummary,
   cardSharkSummary,
 } from './createAgents'
-import { DQNLearning, QLearning } from './learningMethods'
+import { DQNLearning, QLearning, SARSALearning } from './learningMethods'
 import { trainAgent } from './training'
 import { evaluateAgents } from './evaluating'
 import { randomAgent } from './random'
@@ -14,7 +14,7 @@ import { heuristicAgent } from './heuristic'
 jest.setTimeout(1000000000)
 
 test(`Contextless agents can be trained`, done => {
-  const timmy = createAgent(contextlessSummary, QLearning)
+  const timmy = createAgent(contextlessSummary, SARSALearning)
   let m = 0
   let s = 0
   let g = 100

@@ -3,6 +3,7 @@ import { Card, History, State, Player } from '../simulator'
 export type FeedBack<F> = {
   actual: number
   expected: number
+  reward: number
   trace: F
   state: State
   actor: Player<F>
@@ -12,10 +13,10 @@ export type FeedBack<F> = {
 export function interpretHistory<F>(
   history: History<F>[],
 ): {
-  reward: number
-  feedBack: FeedBack<F>[]
-  score: number
-} {
+    reward: number
+    feedBack: FeedBack<F>[]
+    score: number
+  } {
   if (history.length === 0) {
     throw new Error('Game history is empty or was not terminated')
   }
@@ -33,6 +34,7 @@ export function interpretHistory<F>(
     rest.feedBack.push({
       actual: rest.reward,
       expected: head.quality,
+      reward: head.reward,
       trace: head.trace,
       state: head.state,
       actor: head.actor,
