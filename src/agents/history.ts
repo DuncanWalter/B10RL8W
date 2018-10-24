@@ -13,10 +13,10 @@ export type FeedBack<F> = {
 export function interpretHistory<F>(
   history: History<F>[],
 ): {
-    reward: number
-    feedBack: FeedBack<F>[]
-    score: number
-  } {
+  reward: number
+  feedBack: FeedBack<F>[]
+  score: number
+} {
   if (history.length === 0) {
     throw new Error('Game history is empty or was not terminated')
   }

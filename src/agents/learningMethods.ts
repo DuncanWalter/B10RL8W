@@ -12,7 +12,8 @@ export type LearningMethod = (
 ) => { error: number[]; trace: unknown; loss: number }[]
 
 /** Deep Q Network policy updating is an on-policy method
- * It compares the Q-Predictions of the Network for each action to the final reward at the end of the episode
+ * It compares the Q-Predictions of the Network for each action to the
+ * final reward at the end of the episode
  *
  * @author Duncan Walter
  */
@@ -31,9 +32,9 @@ export function DQNLearning(
   }
 }
 
-/**Standard Q-Learning updating is an on-policy method
- * The update equation for policy pi: (a: action) => (s: state) is
- * Q(s, a) <- reward + max_{a': action}(Q(pi(a), a'))
+/** Standard Q-Learning updating is an off-policy method
+ * The update equation for policy pi: (a: action, s: state) => number is
+ * Q(s, a) <- reward + max_{a': action}(Q(argmax_{s': state}(pi(a, s')), a'))
  *
  * @author G. Eli Jergensen
  */
@@ -58,7 +59,12 @@ export function QLearning(
     )
 }
 
-/**
+/** SARSA updating is an on-policy method
+ * The update equation for policy pi: (a: action, s: state) => number is
+ * Q(s, a) <- reward + Q(s' => (
+ *   s',
+ *   argmax_{a': action}(pi(a', s'))
+ * )(argmax_{s': state}(pi(a, s')))
  *
  * @author Kate Avery
  */
@@ -68,8 +74,6 @@ export function SARSALearning(
 ): (
   feedbacks: FeedBack<unknown>[],
 ) => { error: number[]; trace: unknown; loss: number }[] {
-  // recall that SARSA's update method is
-  // Q(s, a) <- reward + Q(s', a')
   return feedbacks => {
     return feedbacks.scan(
       (next, current) => {
