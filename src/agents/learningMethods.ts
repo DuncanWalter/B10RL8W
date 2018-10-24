@@ -8,8 +8,8 @@ export type LearningMethod = (
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ) => (
-    feedback: FeedBack<unknown>[],
-  ) => { error: number[]; trace: unknown; loss: number }[]
+  feedback: FeedBack<unknown>[],
+) => { error: number[]; trace: unknown; loss: number }[]
 
 /** Deep Q Network policy updating is an on-policy method
  * It compares the Q-Predictions of the Network for each action to the final reward at the end of the episode
@@ -20,8 +20,8 @@ export function DQNLearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-    feedback: FeedBack<unknown>[],
-  ) => { error: number[]; trace: unknown; loss: number }[] {
+  feedback: FeedBack<unknown>[],
+) => { error: number[]; trace: unknown; loss: number }[] {
   return (feedback: FeedBack<unknown>[]) => {
     return feedback.map(({ expected, actual, trace }) => ({
       error: [errorFnPrime(expected, actual)],
@@ -41,36 +41,20 @@ export function QLearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-    feedback: FeedBack<unknown>[],
-  ) => { error: number[]; trace: unknown; loss: number }[] {
+  feedback: FeedBack<unknown>[],
+) => { error: number[]; trace: unknown; loss: number }[] {
   return feedback =>
     feedback.scan(
-      ({ initial, maxQ }, { expected, actual, trace, state, actor }) => {
-        if (initial) {
-          return {
-            error: [errorFnPrime(expected, actual)],
-            trace: trace,
-            loss: errorFn(expected, actual),
-            initial: false,
-            maxQ: max(
-              actor.policy(state, actor, validPlays(state, actor.hand)),
-              ({ quality }) => quality,
-            )!.quality,
-          }
-        } else {
-          return {
-            error: [errorFnPrime(expected, actual + maxQ)],
-            trace: trace,
-            loss: errorFn(expected, actual + maxQ),
-            initial: false,
-            maxQ: max(
-              actor.policy(state, actor, validPlays(state, actor.hand)),
-              ({ quality }) => quality,
-            )!.quality,
-          }
-        }
-      },
-      { initial: true, maxQ: 0 },
+      ({ maxQ }, { expected, reward, trace, state, actor }) => ({
+        error: [errorFnPrime(expected, reward + maxQ)],
+        trace: trace,
+        loss: errorFn(expected, reward + maxQ),
+        maxQ: max(
+          actor.policy(state, actor, validPlays(state, actor.hand)),
+          ({ quality }) => quality,
+        )!.quality,
+      }),
+      { maxQ: 0 },
     )
 }
 
@@ -82,18 +66,23 @@ export function SARSALearning(
   errorFn: ErrorFunction,
   errorFnPrime: ErrorFunction,
 ): (
-    feedbacks: FeedBack<unknown>[],
-  ) => { error: number[]; trace: unknown; loss: number }[] {
+  feedbacks: FeedBack<unknown>[],
+) => { error: number[]; trace: unknown; loss: number }[] {
   // recall that SARSA's update method is
   // Q(s, a) <- reward + Q(s', a')
-  return (feedbacks => {
-    return feedbacks.scan((next, current) => {
-      return {
-        expected: current.expected,
-        error: [errorFnPrime(current.expected, next.expected + current.reward)],
-        trace: current.trace,
-        loss: errorFn(current.expected, next.expected + current.reward),
-      }
-    }, { expected: 0 })
-  })
+  return feedbacks => {
+    return feedbacks.scan(
+      (next, current) => {
+        return {
+          expected: current.expected,
+          error: [
+            errorFnPrime(current.expected, next.expected + current.reward),
+          ],
+          trace: current.trace,
+          loss: errorFn(current.expected, next.expected + current.reward),
+        }
+      },
+      { expected: 0 },
+    )
+  }
 }
