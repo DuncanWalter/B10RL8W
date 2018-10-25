@@ -42,7 +42,7 @@ test('some fast tooling for generating alternatives to SELU', () => {
       return x * a
     }
 
-    // relu thingy
+    // TODO: test out silu
     // if (x > 1) {
     //   return (x - x) * b + x
     // } else if (x > 0) {
@@ -68,9 +68,10 @@ test('some fast tooling for generating alternatives to SELU', () => {
       const f = zoom(c, activation(a, b))
 
       let e = 0
-
-      for (let mu = 0; mu <= 2; mu += 0.1) {
-        for (let sigma = 0.2; sigma <= 5; sigma *= 1.25) {
+      let i = 0
+      for (let mu = 0; mu <= 0.2; mu += 0.04) {
+        for (let sigma = 0.5; sigma <= 2; sigma *= 1.1) {
+          i++
           let m = integral(x => f((x + mu) * sigma) * n(x))
           if (m - mu > 0 === mu > 0 && m - mu < 0 === mu < 0) {
             m = Math.abs(m) + 1
@@ -87,7 +88,7 @@ test('some fast tooling for generating alternatives to SELU', () => {
       }
 
       if (e < best.error) {
-        best.error = e
+        best.error = e / i
         best.a = a
         best.b = b
         best.c = c
@@ -96,9 +97,9 @@ test('some fast tooling for generating alternatives to SELU', () => {
     return best
   }
 
-  const { a, b, c } = solve(0, 1.8, 0.1, 0.2, 0.1, 1.5)
+  const { a, b, c, error } = solve(1, 2.5, 0.05, 0.05, 0.5, 1.0)
 
-  console.log('best', a.toFixed(5), b.toFixed(5), c.toFixed(5))
+  console.log('best', error, a.toFixed(5), b.toFixed(5), c.toFixed(5))
   // const f = activation(a, b)
 
   // for (let m = -0.1; m <= 0.1; m += 0.01) {
