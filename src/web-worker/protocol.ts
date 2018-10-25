@@ -37,6 +37,7 @@ export type TrainingProgressMessage = {
   random: AgentEvaluation
   agent: AgentEvaluation
   heuristic: AgentEvaluation
+  agentLoss: number
 }
 
 export type DoneMessage = {

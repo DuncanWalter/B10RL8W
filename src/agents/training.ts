@@ -1,8 +1,22 @@
 import { Agent, interpretHistory } from '.'
-import { playGame } from '../simulator'
+import { playGame, Policy } from '../simulator'
 import { range } from '../utils/range'
 import '../utils/arrayGenerate'
 import { createHeuristicAgent, heuristicAgent } from './heuristic'
+import { dev, max } from '../utils/math'
+import { randomAgent } from './random'
+
+function forceExploration<T>(noise: number, policy: Policy<T>): Policy<T> {
+  return (state, player, actions) => {
+    const selections = policy(state, player, actions)
+    const sigma = dev(selections.map(selection => selection.quality))
+    return [
+      max(selections, selection => {
+        return selection.quality + noise * sigma * Math.random()
+      })!,
+    ]
+  }
+}
 
 export function trainAgent<F>(
   { policy: agent, train }: Agent<F>,
@@ -18,8 +32,16 @@ export function trainAgent<F>(
   const hugo = heuristicAgent.policy
   function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
-      [...range(6)].generate(() => {
-        const [a, _, b] = playGame([agent, hugo, agent, hugo], simplified)
+      [...range(24)].generate(() => {
+        const [a, _, b] = playGame(
+          [
+            forceExploration(0.3, agent),
+            hugo,
+            forceExploration(0.3, agent),
+            hugo,
+          ],
+          simplified,
+        )
         return [a, b].map(interpretHistory).generate(({ feedBack }) => feedBack)
       }),
     )

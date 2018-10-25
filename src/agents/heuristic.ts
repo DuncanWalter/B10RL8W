@@ -9,9 +9,8 @@ import {
 } from '../simulator'
 import { Agent } from '.'
 
-export function createHeuristicAgent(): Agent<null, 'heuristic'> {
+export function createHeuristicAgent(): Agent<null> {
   return {
-    type: 'heuristic',
     policy(state: State, player: Player, actions: Card[]) {
       const possibleMoves = validPlays(state, player.hand)
       const currentPoints = trickPoints(state.trick, state.simplified)
