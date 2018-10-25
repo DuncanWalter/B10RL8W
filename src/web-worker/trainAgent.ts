@@ -8,14 +8,16 @@ import {
   cardCountingSummary,
   cardSharkSummary,
   cardGuruSummary,
+  DQNLearning,
+  QLearning,
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
 
-const evalBatchSize = 100
-const epochStepSize = 25
+const evalBatchSize = 250
+const epochStepSize = 100
 
 export function trainNewAgent({
   agentType,
@@ -26,23 +28,23 @@ export function trainNewAgent({
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
-      trainingAgent = createAgent(contextlessSummary)
+      trainingAgent = createAgent(contextlessSummary, QLearning)
       break
     }
     case 'rule-tracking': {
-      trainingAgent = createAgent(ruleTrackingSummary)
+      trainingAgent = createAgent(ruleTrackingSummary, DQNLearning)
       break
     }
     case 'card-counting': {
-      trainingAgent = createAgent(cardCountingSummary)
+      trainingAgent = createAgent(cardCountingSummary, DQNLearning)
       break
     }
     case 'card-shark': {
-      trainingAgent = createAgent(cardSharkSummary)
+      trainingAgent = createAgent(cardSharkSummary, DQNLearning)
       break
     }
     case 'guru': {
-      trainingAgent = createAgent(cardGuruSummary)
+      trainingAgent = createAgent(cardGuruSummary, QLearning)
       break
     }
     default: {
