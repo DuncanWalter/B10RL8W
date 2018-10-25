@@ -16,8 +16,8 @@ import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
 
-const evalBatchSize = 100
-const epochStepSize = 25
+const evalBatchSize = 250
+const epochStepSize = 100
 
 export function trainNewAgent({
   agentType,

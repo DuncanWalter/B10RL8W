@@ -17,7 +17,7 @@ test(`Contextless agents can be trained`, done => {
   const timmy = createAgent(contextlessSummary, SARSALearning)
   let m = 0
   let s = 0
-  let g = 100
+  let g = 30
   trainAgent(
     timmy,
     2,
