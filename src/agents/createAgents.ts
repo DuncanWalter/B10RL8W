@@ -57,6 +57,7 @@ export const cardGuruSummary = joinSummaries(
 export function createAgent(
   agentSummary: GameSummary<number>,
   learningMethod: LearningMethod,
+  serializedContent?: string,
 ): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
   function huberLoss(a: number, b: number) {
@@ -75,12 +76,13 @@ export function createAgent(
       learningRate: 0.03,
       learningDecay: 0.5 ** (1 / 2500),
       inputSize: agentSummary.size,
+      serializedContent,
     },
     guardTransform(),
-    denseTransform(80),
-    logicalTransform(65),
-    logicalTransform(50),
-    logicalTransform(30),
+    denseTransform(64),
+    logicalTransform(48),
+    logicalTransform(32),
+    logicalTransform(16),
     denseTransform(1),
   )
 

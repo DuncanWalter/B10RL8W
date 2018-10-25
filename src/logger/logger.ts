@@ -85,6 +85,7 @@ async function updateLog(session: string, update: LogUpdate) {
           logContent.epochsTrained + update.additionalEpochsTrained,
         serializedContent: update.serializedContent,
         lastUpdate: currentTime,
+        snapshots: [...logContent.snapshots, ...update.snapshots],
       }
     } catch {
       throw new Error(`Log file ${fileName}.json is malformed`)
@@ -101,6 +102,7 @@ async function updateLog(session: string, update: LogUpdate) {
       creationTime: currentTime,
       lastUpdate: currentTime,
       serializedContent: update.serializedContent,
+      snapshots: update.snapshots,
     }
   }
   return fs.writeJSON(path.join('.logs', filePath), newLog).then(() =>

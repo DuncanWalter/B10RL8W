@@ -15,6 +15,7 @@ import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
 import { createHeuristicAgent } from '../agents/heuristic'
 import { TrainCommand, postMessage } from './protocol'
+import { LogUpdate } from '../logger/types'
 
 const evalBatchSize = 250
 const epochStepSize = 100
@@ -52,6 +53,7 @@ export function trainNewAgent({
     }
   }
 
+  let additionalSnapshots: LogUpdate['snapshots'] = []
   let additionalEpochsTrained = 0
   let loss = NaN
 
@@ -98,9 +100,20 @@ export function trainNewAgent({
           heuristic,
           agentLoss: loss,
         })
+        additionalSnapshots.push({
+          ...agent,
+          epoch,
+        })
       }
 
       if (epoch === 1 || epoch === epochs) {
+        const update: LogUpdate = {
+          serializedContent: trainingAgent.serialize(),
+          additionalEpochsTrained,
+          snapshots: additionalSnapshots,
+          agentType,
+          simplified,
+        }
         fetch(
           new Request(
             `http://localhost:${config.loggerPort}/log/${encodeURIComponent(
@@ -111,10 +124,7 @@ export function trainNewAgent({
               headers: {
                 'content-type': 'text/json',
               },
-              body: JSON.stringify({
-                serializedContent: trainingAgent.serialize(),
-                additionalEpochsTrained,
-              }),
+              body: JSON.stringify(update),
             },
           ),
         )

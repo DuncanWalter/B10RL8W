@@ -2,9 +2,8 @@ import { Agent, interpretHistory } from '.'
 import { playGame, Policy } from '../simulator'
 import { range } from '../utils/range'
 import '../utils/arrayGenerate'
-import { createHeuristicAgent, heuristicAgent } from './heuristic'
+import { heuristicAgent } from './heuristic'
 import { dev, max } from '../utils/math'
-import { randomAgent } from './random'
 
 function forceExploration<T>(noise: number, policy: Policy<T>): Policy<T> {
   return (state, player, actions) => {

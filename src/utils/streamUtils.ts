@@ -11,7 +11,7 @@ export function unwrapStream<T>(stream: Stream): Promise<T> {
       }
     })
     stream.once('end', () => {
-      const allData = data.join()
+      const allData = data.join('')
       if (allData === '' || allData === undefined) {
         resolve(undefined)
       } else {

@@ -1,9 +1,10 @@
 type LogBase = {
   agentType:
     | 'contextless'
-    | 'suit-counting'
     | 'card-counting'
-    | 'context-learning'
+    | 'rule-tracking'
+    | 'card-shark'
+    | 'guru'
   simplified: boolean
 }
 type LogDataAttributes = {
@@ -12,6 +13,13 @@ type LogDataAttributes = {
   creationTime: number
   lastUpdate: number
   serializedContent: string
+  snapshots: {
+    meanScore: number
+    meanPerformance: number
+    stdDevPerformance: number
+    stdDevScore: number
+    epoch: number
+  }[]
 }
 type LogHeaderAttributes = {
   sessionName: string
@@ -21,6 +29,13 @@ type LogHeaderAttributes = {
 type LogUpdateAttributes = {
   additionalEpochsTrained: number
   serializedContent: string
+  snapshots: {
+    meanScore: number
+    meanPerformance: number
+    stdDevPerformance: number
+    stdDevScore: number
+    epoch: number
+  }[]
 }
 
 export type LogData = LogBase & LogDataAttributes

@@ -33,7 +33,23 @@ export function denseTransform(
         deltas = matrix(outputSize, inputSize, () => 0)
       },
       serialize() {
-        return JSON.stringify(weights)
+        const content = JSON.stringify(weights)
+
+        for (let col of weights) {
+          for (let val of col) {
+            if (typeof val !== 'number' || val !== val) {
+              console.log(weights.indexOf(col), col.indexOf(val), val)
+            }
+          }
+        }
+
+        if (content.includes(',,')) {
+          const ind = content.indexOf(',,')
+          console.log(content.length, ind)
+          console.log(content.slice(ind - 20, ind + 20))
+          console.log(weights)
+        }
+        return content
       },
       size: outputSize,
     }
