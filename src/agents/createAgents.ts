@@ -60,21 +60,22 @@ export function createAgent(
   serializedContent?: string,
 ): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
+  const huberConst = 2;
   function huberLoss(a: number, b: number) {
-    if (Math.abs(a - b) > 2) {
-      return 0.5 * (2 * (Math.abs(a - b) - 2) + 36)
+    if (Math.abs(a - b) > huberConst) {
+      return huberConst * (Math.abs(a - b) - huberConst) + 0.5 * huberConst ** 2
     } else {
       return 0.5 * (a - b) ** 2
     }
   }
   function huberLossGradient(expected: number, actual: number) {
-    return Math.max(-2, Math.min(actual - expected, 2))
+    return Math.max(-1 * huberConst, Math.min(actual - expected, huberConst))
   }
   const huberifiedLearningMethod = learningMethod(huberLoss, huberLossGradient)
   const net = new NeuralNet(
     {
-      learningRate: 0.03,
-      learningDecay: 0.5 ** (1 / 2500),
+      learningRate: 0.0006, //0.01, 
+      learningDecay: 0.5 ** (1 / 10000),
       inputSize: agentSummary.size,
       serializedContent,
     },

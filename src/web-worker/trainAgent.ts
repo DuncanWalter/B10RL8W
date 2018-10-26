@@ -10,6 +10,7 @@ import {
   cardGuruSummary,
   DQNLearning,
   QLearning,
+  SARSALearning,
 } from '../agents'
 import { config } from '../config'
 import { evaluateAgents } from '../agents/evaluating'
@@ -33,7 +34,7 @@ export function trainNewAgent({
       break
     }
     case 'rule-tracking': {
-      trainingAgent = createAgent(ruleTrackingSummary, DQNLearning)
+      trainingAgent = createAgent(ruleTrackingSummary, QLearning)
       break
     }
     case 'card-counting': {
