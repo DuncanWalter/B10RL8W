@@ -77,7 +77,7 @@ export type TrainDialogState = {
 export default class TrainDialog extends React.Component<
   TrainDialogProps,
   TrainDialogState
-> {
+  > {
   constructor(props: TrainDialogProps) {
     super(props)
     this.state = {
@@ -90,13 +90,13 @@ export default class TrainDialog extends React.Component<
       randomScore: line('Random Score', '#1111ff', '#aaaaff'),
       doneTraining: false,
       isTraining: false,
-      cancelFn: () => {},
+      cancelFn: () => { },
     }
   }
 
   callTrainAgent = () => {
     const agentName = 'Fred'
-    const agentType = 'rule-tracking'
+    const agentType = 'contextless'
     const epochs = 5000
     const onProgress = this.trainingCallback
     const simplified = false
@@ -111,7 +111,7 @@ export default class TrainDialog extends React.Component<
       this.setState({
         doneTraining: true,
         isTraining: false,
-        cancelFn: () => {},
+        cancelFn: () => { },
       })
     })
     this.setState({ cancelFn: promise.cancel, isTraining: true })
@@ -158,7 +158,7 @@ export default class TrainDialog extends React.Component<
     this.setState({
       isTraining: false,
       doneTraining: true,
-      cancelFn: () => {},
+      cancelFn: () => { },
     })
   }
 
@@ -179,15 +179,15 @@ export default class TrainDialog extends React.Component<
         <LinearProgress />
       </CardContent>
     ) : (
-      undefined
-    )
+        undefined
+      )
     const rightButton = doneTraining ? (
       undefined
     ) : isTraining ? (
       <Button text="Cancel" onClick={this.stopTraining} variant="danger" />
     ) : (
-      <Button text="Train Agent" onClick={this.callTrainAgent} />
-    )
+          <Button text="Train Agent" onClick={this.callTrainAgent} />
+        )
     return (
       <Card>
         <CardHeader>Train New Agent</CardHeader>

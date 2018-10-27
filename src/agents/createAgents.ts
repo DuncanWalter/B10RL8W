@@ -51,7 +51,6 @@ export const cardGuruSummary = joinSummaries(
   actionSummary,
   ruleSummary,
   cardCountingSummary,
-  opponentSummary,
 )
 
 export function createAgent(
