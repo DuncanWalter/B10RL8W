@@ -21,8 +21,8 @@ export function trainAgent<F>(
   { policy: agent, train }: Agent<F>,
   epochs: number,
   simplified: boolean,
-  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => { },
-  done: (cancelled: boolean) => void = () => { },
+  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => {},
+  done: (cancelled: boolean) => void = () => {},
 ) {
   let cancelled = false
   function cancel() {
