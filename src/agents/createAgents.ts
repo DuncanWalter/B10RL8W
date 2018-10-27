@@ -73,7 +73,7 @@ export function createAgent(
   const huberifiedLearningMethod = learningMethod(huberLoss, huberLossGradient)
   const net = new NeuralNet(
     {
-      learningRate: 0.0006, //0.01,
+      learningRate: 0.001, //0.01,
       learningDecay: 0.5 ** (1 / 10000),
       inputSize: agentSummary.size,
       serializedContent,
