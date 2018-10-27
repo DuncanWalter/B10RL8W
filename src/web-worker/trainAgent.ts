@@ -30,11 +30,11 @@ export function trainNewAgent({
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
-      trainingAgent = createAgent(contextlessSummary, QLearning)
+      trainingAgent = createAgent(contextlessSummary, DQNLearning)
       break
     }
     case 'rule-tracking': {
-      trainingAgent = createAgent(ruleTrackingSummary, QLearning)
+      trainingAgent = createAgent(ruleTrackingSummary, DQNLearning)
       break
     }
     case 'card-counting': {
@@ -46,7 +46,7 @@ export function trainNewAgent({
       break
     }
     case 'guru': {
-      trainingAgent = createAgent(cardGuruSummary, QLearning)
+      trainingAgent = createAgent(cardGuruSummary, DQNLearning)
       break
     }
     default: {

@@ -21,8 +21,8 @@ export function trainAgent<F>(
   { policy: agent, train }: Agent<F>,
   epochs: number,
   simplified: boolean,
-  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => {},
-  done: (cancelled: boolean) => void = () => {},
+  log: (epoch: number, meanLoss: number, stdDevLoss: number) => void = () => { },
+  done: (cancelled: boolean) => void = () => { },
 ) {
   let cancelled = false
   function cancel() {
@@ -31,17 +31,17 @@ export function trainAgent<F>(
   const hugo = heuristicAgent.policy
   function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
-      [...range(24)].generate(() => {
-        const [a, _, b] = playGame(
+      [...range(30)].generate(() => {
+        const [a] = playGame(
           [
             forceExploration(0.3, agent),
             hugo,
-            forceExploration(0.3, agent),
+            hugo,
             hugo,
           ],
           simplified,
         )
-        return [a, b].map(interpretHistory).generate(({ feedBack }) => feedBack)
+        return [a].map(interpretHistory).generate(({ feedBack }) => feedBack)
       }),
     )
     log(epoch, meanLoss, stdDevLoss)
