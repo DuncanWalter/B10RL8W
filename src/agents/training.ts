@@ -33,12 +33,7 @@ export function trainAgent<F>(
     const { meanLoss, stdDevLoss } = train(
       [...range(30)].generate(() => {
         const [a] = playGame(
-          [
-            forceExploration(0.3, agent),
-            hugo,
-            hugo,
-            hugo,
-          ],
+          [forceExploration(0.3, agent), hugo, hugo, hugo],
           simplified,
         )
         return [a].map(interpretHistory).generate(({ feedBack }) => feedBack)
