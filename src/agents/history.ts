@@ -10,6 +10,12 @@ export type FeedBack<F> = {
   action: Card
 }
 
+/**
+ * Converts the history of a player from a game of Hearts into
+ * an object containing feedback for every action taken by the agent
+ * including the reward given to that action and the total reward
+ * of all actions after that move.
+ */
 export function interpretHistory<F>(
   history: History<F>[],
 ): {

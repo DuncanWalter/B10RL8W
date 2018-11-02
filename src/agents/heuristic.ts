@@ -9,6 +9,16 @@ import {
 } from '../simulator'
 import { Agent } from '.'
 
+/**
+ * Our heuristic agent (which plays mysteriously like @dwalter
+ * did before we started this project...). The heuristic works by
+ * determining whether a card is "safe" to play based on whether
+ * the trick is empty, the card would lead the current trick, whether
+ * the trick contains points, and whether the card is worth any points.
+ * With all those factors taken into account, the heuristic tries to play
+ * big nasty cards when it is safe and play small, stealthy cards
+ * in risky situations.
+ */
 export function createHeuristicAgent(): Agent<null> {
   return {
     policy(state: State, player: Player, actions: Card[]) {

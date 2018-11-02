@@ -9,9 +9,10 @@ import * as Transform from './transform'
  * the gradient decent style. The NN runs forward on single input instances
  * allowing for efficient use in RL, streaming, or real-time applications.
  * However, the backwards pass runs on batches of errors associated with traces
- * of the forward pass. This allows for arbitrary batching. The forward pass
- * trace is typically used to save calculations performed in the forward pass
- * so they don't need to be redone in the backwards pass.
+ * of the forward pass. This allows for arbitrary batching without duplicate
+ * computation. The forward pass trace is typically used to save calculations
+ * performed in the forward pass so they don't need to be redone in the backwards
+ * pass.
  */
 
 export default NeuralNet

@@ -80,7 +80,7 @@ export function createAgent(
     },
     guardTransform(),
     denseTransform(64),
-    logicalTransform(48),
+    logicalTransform(48), // logical transforms essentially constitute a hidden layer
     logicalTransform(32),
     logicalTransform(16),
     denseTransform(1),

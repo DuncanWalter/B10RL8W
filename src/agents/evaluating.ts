@@ -2,6 +2,12 @@ import { Agent, interpretHistory } from '.'
 import { playGame } from '../simulator'
 import { range } from '../utils/range'
 
+/**
+ * Code for evaluating agents. Mostly combinatorics for determining unique seating
+ * arrangements and code for collecting all the various averages and standard
+ * deviations.
+ */
+
 type EvaluationTrace = {
   weight: number
   scores: number[]
@@ -179,6 +185,10 @@ function allSame<T>(arr: T[]) {
   }
 }
 
+/**
+ * Function which evaluates a list of agents by playing them against one another for
+ * a specified number of games in all unique seating arrangements.
+ */
 export function evaluateAgents(
   agents: Agent<any>[],
   games: number,

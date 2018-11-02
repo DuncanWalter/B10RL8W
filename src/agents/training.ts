@@ -5,6 +5,9 @@ import '../utils/arrayGenerate'
 import { heuristicAgent } from './heuristic'
 import { dev, max } from '../utils/math'
 
+/**
+ * A function which adds noise based exploration to an agent policy.
+ */
 function forceExploration<T>(noise: number, policy: Policy<T>): Policy<T> {
   return (state, player, actions) => {
     const selections = policy(state, player, actions)
@@ -17,6 +20,9 @@ function forceExploration<T>(noise: number, policy: Policy<T>): Policy<T> {
   }
 }
 
+/**
+ * callback based inverted-control training function which trains agents
+ */
 export function trainAgent<F>(
   { policy: agent, train }: Agent<F>,
   epochs: number,

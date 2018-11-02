@@ -10,6 +10,11 @@ import {
   suits,
 } from '.'
 
+/**
+ * The simulator is defined as a state reducer and respects immutability.
+ *
+ */
+
 export type Trick = {
   suit: number | null
   cards: Card[]
@@ -23,6 +28,7 @@ export type State = {
   trickLeader: 0 | 1 | 2 | 3
 }
 
+// Selects the card which wins the trick
 export function trickWinner({ suit, cards }: Trick): Card | null {
   return cards.reduce((winner: null | Card, card?: Card) => {
     if (
@@ -37,6 +43,7 @@ export function trickWinner({ suit, cards }: Trick): Card | null {
   }, null)
 }
 
+// Creates a list of all possible moves
 export function validPlays(
   {
     trick: { suit },
@@ -63,6 +70,7 @@ export function validPlays(
   }
 }
 
+// gets the number of points a single card is worth
 export function cardPoints(card: Card, simplified: boolean): number {
   const isHeart = card.suit === suits.hearts
   const isSpade = card.suit === suits.spades
@@ -76,6 +84,7 @@ export function cardPoints(card: Card, simplified: boolean): number {
   }
 }
 
+// gets the number of points present in a n entire trick
 export function trickPoints(
   { cards }: { cards: Card[] },
   simplified: boolean,
@@ -83,6 +92,7 @@ export function trickPoints(
   return cards.reduce((total, card) => total + cardPoints(card, simplified), 0)
 }
 
+// locates the player with a specific card
 export function playerWithCard(
   players: Player[],
   suit: keyof typeof suits,
@@ -101,6 +111,7 @@ export function playerWithCard(
   }
 }
 
+// produces a new, sorted 52 card deck
 function* freshDeck(): IterableIterator<Card> {
   for (let suit of Object.keys(suits) as (keyof typeof suits)[]) {
     for (let rank = 2; rank < 15; rank++) {
@@ -109,6 +120,7 @@ function* freshDeck(): IterableIterator<Card> {
   }
 }
 
+// ...shuffles a deck...
 function shuffleDeck(deck: Card[], random: () => number = Math.random): void {
   for (let i = 0; i < deck.length; i++) {
     const j = (random() * deck.length) | 0
@@ -118,6 +130,7 @@ function shuffleDeck(deck: Card[], random: () => number = Math.random): void {
   }
 }
 
+// State reducer for playing a single card
 function playCard(
   state: State,
   actor: Player,
@@ -152,6 +165,7 @@ function playCard(
   }
 }
 
+// State reducer for an entire round of gameplay
 function playRound(startState: State): State {
   let state = startState
 
@@ -233,6 +247,7 @@ function playRound(startState: State): State {
   }
 }
 
+// returns a game history for each player which can be used to create feedback for agents
 export function playGame<N, E, S, W>(
   policies: [Policy<N>, Policy<E>, Policy<S>, Policy<W>],
   simplified: boolean,

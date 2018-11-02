@@ -6,6 +6,12 @@ import {
   UniformTransformation,
 } from './transform'
 
+/**
+ * Neural net defined in a way that allows a batch to be
+ * collected by running individual forward passes, collecting
+ * the results into a batch, and then updating the net with
+ * the entire batch at once.
+ */
 export default class NeuralNet {
   learningRate: number
   learningDecay: number
