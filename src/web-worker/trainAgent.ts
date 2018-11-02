@@ -30,23 +30,23 @@ export function trainNewAgent({
   let trainingAgent: Agent
   switch (agentType) {
     case 'contextless': {
-      trainingAgent = createAgent(contextlessSummary, QLearning)
+      trainingAgent = createAgent(contextlessSummary, SARSALearning)
       break
     }
     case 'rule-tracking': {
-      trainingAgent = createAgent(ruleTrackingSummary, QLearning)
+      trainingAgent = createAgent(ruleTrackingSummary, SARSALearning)
       break
     }
     case 'card-counting': {
-      trainingAgent = createAgent(cardCountingSummary, DQNLearning)
+      trainingAgent = createAgent(cardCountingSummary, SARSALearning)
       break
     }
     case 'card-shark': {
-      trainingAgent = createAgent(cardSharkSummary, DQNLearning)
+      trainingAgent = createAgent(cardSharkSummary, SARSALearning)
       break
     }
     case 'guru': {
-      trainingAgent = createAgent(cardGuruSummary, QLearning)
+      trainingAgent = createAgent(cardGuruSummary, SARSALearning)
       break
     }
     default: {
@@ -74,6 +74,10 @@ export function trainNewAgent({
     random,
     heuristic,
     agentLoss: NaN,
+  })
+  additionalSnapshots.push({
+    ...agent,
+    epoch: 0,
   })
 
   return trainAgent(

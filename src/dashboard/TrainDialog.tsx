@@ -95,9 +95,9 @@ export default class TrainDialog extends React.Component<
   }
 
   callTrainAgent = () => {
-    const agentName = 'Fred'
+    const agentName = 'sarsa_rule-tracking_5'
     const agentType = 'rule-tracking'
-    const epochs = 5000
+    const epochs = 2000
     const onProgress = this.trainingCallback
     const simplified = false
     const promise = trainAgent({

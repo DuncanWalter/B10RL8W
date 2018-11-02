@@ -31,17 +31,12 @@ export function trainAgent<F>(
   const hugo = heuristicAgent.policy
   function trainEpoch(epoch: number) {
     const { meanLoss, stdDevLoss } = train(
-      [...range(24)].generate(() => {
-        const [a, _, b] = playGame(
-          [
-            forceExploration(0.3, agent),
-            hugo,
-            forceExploration(0.3, agent),
-            hugo,
-          ],
+      [...range(30)].generate(() => {
+        const [a] = playGame(
+          [forceExploration(0.3, agent), hugo, hugo, hugo],
           simplified,
         )
-        return [a, b].map(interpretHistory).generate(({ feedBack }) => feedBack)
+        return [a].map(interpretHistory).generate(({ feedBack }) => feedBack)
       }),
     )
     log(epoch, meanLoss, stdDevLoss)
