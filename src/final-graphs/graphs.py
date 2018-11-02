@@ -17,27 +17,55 @@ def averageRuns(directory, learningAgentType):
   avg = (avg.groupby(avg.index)).mean()
   return avg
 
-def plotMethod(directory, method):
-  contextlessFrame = averageRuns(directory, method+"_contextless")
-  ruleFrame = averageRuns(directory, method+"_ruletracking")
-  guruFrame = averageRuns(directory, method+"_guru")
+def plotMethod(directory, agentType, metric, title):
+  sarsaFrame = averageRuns(directory, "sarsa_"+agentType)
+  qFrame = averageRuns(directory, "qlearning_"+agentType)
+  dqnFrame = averageRuns(directory, "dqn_"+agentType)
 
-  x = range(0, 2001, 100)
-  contextlessY = contextlessFrame["meanPerformance"]
-  ruleY = ruleFrame["meanPerformance"]
-  guruY = guruFrame["meanPerformance"]
+  sarsaQX = range(0, 2001, 100)
+  dqnX = range(0, 10001, 100)
+  sarsaY = sarsaFrame["mean"+metric]
+  qY = qFrame["mean"+metric]
+  dqnY = dqnFrame["mean"+metric]
+  sarsaCI = sarsaFrame["stdDev"+metric]
+  qCI = qFrame["stdDev"+metric]
+  dqnCI = dqnFrame["stdDev"+metric]
 
-  contextlessLine, = plt.plot(x, contextlessY, 'r--', label="Contextless")
-  ruleLine, = plt.plot(x, ruleY, 'b--', label="Rule")
-  guruLine, = plt.plot(x, guruY, 'g--', label="Guru")
-  plt.legend(handles=[contextlessLine, ruleLine, guruLine])
+  sarsaCILine = plt.fill_between(sarsaQX, sarsaY+sarsaCI*1.96, \
+  sarsaY-sarsaCI*1.96, color="r", alpha=0.2)
+  qCILine = plt.fill_between(sarsaQX, qY+qCI*1.96, \
+  qY-qCI*1.96, color="b", alpha=0.2)
+  dqnCILine = plt.fill_between(dqnX, dqnY+dqnCI*1.96, \
+  dqnY-dqnCI*1.96, color="g", alpha=0.2)
+
+  sarsaLine, = plt.plot(sarsaQX, sarsaY, 'r', label="SARSA")
+  qLine, = plt.plot(sarsaQX, qY, 'b', label="Q Learning")
+  dqnLine, = plt.plot(dqnX, dqnY, 'g', label="Deep Q Network")
+
+  if(metric == "Performance"):
+    plt.legend(handles=[sarsaLine, qLine, dqnLine], loc=4)
+    plt.ylabel('mean performance')
+  else:
+    plt.legend(handles=[sarsaLine, qLine, dqnLine], loc=1)
+    plt.ylabel('mean score')
+
   plt.xlabel('epoch')
-  plt.ylabel('mean performance')
   #plt.ylim(0, 70)
-  plt.xlim(0, 2000)
-  plt.title('Agent Performance with SARSA')
+  #plt.xlim(0, 2000)
+  plt.title(title)
   plt.show()
 
 if __name__ == '__main__':
-  #averageRuns("/Users/Kate/B10RL8W/.logs", "sarsa_contextless")
-  plotMethod("/Users/Kate/B10RL8W/.logs", "sarsa")
+  """plotMethod("/Users/Kate/B10RL8W/.logs", "contextless", "Performance", \
+  'Contextless Agent Performance with Different Learning Methods')
+  plotMethod("/Users/Kate/B10RL8W/.logs", "ruletracking", "Performance", \
+  'Rule-Tracking Agent Performance with Different Learning Methods')
+  plotMethod("/Users/Kate/B10RL8W/.logs", "guru", "Performance", \
+  'Contextual Agent Performance with Different Learning Methods')"""
+  
+  plotMethod("/Users/Kate/B10RL8W/.logs", "contextless", "Score", \
+  'Contextless Agent Score with Different Learning Methods')
+  plotMethod("/Users/Kate/B10RL8W/.logs", "ruletracking", "Score", \
+  'Rule-Tracking Agent Score with Different Learning Methods')
+  plotMethod("/Users/Kate/B10RL8W/.logs", "guru", "Score", \
+  'Contextual Agent Score with Different Learning Methods')
