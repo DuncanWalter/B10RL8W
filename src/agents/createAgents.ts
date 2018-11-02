@@ -51,7 +51,6 @@ export const cardGuruSummary = joinSummaries(
   actionSummary,
   ruleSummary,
   cardCountingSummary,
-  opponentSummary,
 )
 
 export function createAgent(
@@ -60,7 +59,7 @@ export function createAgent(
   serializedContent?: string,
 ): Agent<unknown> {
   // huber loss is like squared error loss but more robust to outliers
-  const huberConst = 2;
+  const huberConst = 2
   function huberLoss(a: number, b: number) {
     if (Math.abs(a - b) > huberConst) {
       return huberConst * (Math.abs(a - b) - huberConst) + 0.5 * huberConst ** 2
@@ -74,7 +73,7 @@ export function createAgent(
   const huberifiedLearningMethod = learningMethod(huberLoss, huberLossGradient)
   const net = new NeuralNet(
     {
-      learningRate: 0.0006, //0.01, 
+      learningRate: 0.0006, //0.01,
       learningDecay: 0.5 ** (1 / 10000),
       inputSize: agentSummary.size,
       serializedContent,
