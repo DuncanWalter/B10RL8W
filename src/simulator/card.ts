@@ -1,3 +1,5 @@
+/** A card consists of a pair of enums (suit, rank) */
+
 export const suits = {
   hearts: 0,
   spades: 1,

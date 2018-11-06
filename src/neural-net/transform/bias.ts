@@ -1,6 +1,8 @@
 import { TransformationFactory } from '.'
 import { vector, rowZip, add, mul, mapRow } from '../batchMath'
 
+/** Adds a learned bias vector to the outputs of the previous layer */
+
 export function biasTransform(
   seed: (i: number, n: number) => number = (i, n) =>
     ((i % 2 === 0 ? 1 : -1) / Math.sqrt(n)) * Math.random(),

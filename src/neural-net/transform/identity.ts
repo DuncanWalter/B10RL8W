@@ -1,5 +1,7 @@
 import { TransformationFactory } from '.'
 
+/** I do "nothing". I'm having an identity crisis! */
+
 export function identityTransform(): TransformationFactory {
   return ({ size }) => ({
     type: 'simplified',

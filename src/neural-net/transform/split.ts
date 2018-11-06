@@ -2,6 +2,11 @@ import { TransformationFactory, regularize } from '.'
 import { mapRow } from '../batchMath'
 import { identityTransform } from './identity'
 
+/** Allows for the weighting of multiple different transforms into a single
+ * transform. Whereas pipeTransforms can be though of as a single tube, this can
+ * be thought of as a junction between possibly different size tubes
+ */
+
 function weighted(
   factory:
     | TransformationFactory

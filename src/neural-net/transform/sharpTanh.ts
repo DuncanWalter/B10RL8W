@@ -1,6 +1,11 @@
 import { TransformationFactory } from '.'
 import { mapRow } from '../batchMath'
 
+/** An activation layer which is linear outside of the center region, where it
+ * instead has a certain non-zero slope. Effectively looks like 3-piece linear
+ * approximation to the tanh function
+ */
+
 export function sharpTanhTransform(
   slope: number = 0.05,
 ): TransformationFactory {

@@ -2,6 +2,8 @@ import { TransformationFactory, regularize } from '.'
 import { identityTransform } from './identity'
 import '../../utils/arrayScan'
 
+/** Bundles a series of transforms into a single transform */
+
 export function pipeTransform(
   ...transformFactories: TransformationFactory[]
 ): TransformationFactory {

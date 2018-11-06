@@ -1,6 +1,8 @@
 import { Transformation } from './transform'
 import '../utils/arrayScan'
 
+/** Various math utility functions designed to operate efficiently on matrices */
+
 export function mul(a: number, b: number) {
   return a * b
 }
