@@ -8,6 +8,10 @@ import {
   scaleMat,
 } from '../batchMath'
 
+/** Constitutes a single linearly-computed dense layer from the outputs of the
+ * previous layer. Essentially performs a single matrix multiplication
+ */
+
 export function denseTransform(
   outputSize: number,
   seed: (i: number, j: number, n: number) => number = (i, j, n) =>

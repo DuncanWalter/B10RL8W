@@ -1,6 +1,10 @@
 import { TransformationFactory } from '.'
 import { vector, mapRow } from '../batchMath'
 
+/** Normalizes net inputs to be between 0 and 1 based on the minimum and maximum
+ * values observed
+ */
+
 export function guardTransform(
   floor: number = 0,
   ceil: number = 1,

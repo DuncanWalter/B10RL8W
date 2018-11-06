@@ -16,6 +16,10 @@ import {
 import { unwrapStream } from '../utils/streamUtils'
 import { config } from '../config'
 
+/**
+ * Provides the filesystem callbacks necessary to store/load snapshots of agents
+ */
+
 export const app = new Koa()
 
 function retrieveHeader(log: LogHeader) {

@@ -6,8 +6,10 @@ import { biasTransform } from './bias'
 import { denseTransform } from './dense'
 import { sharpTanhTransform } from './sharpTanh'
 
-// Meant to provide a basic building block for
-// stable, expressive nets. Maybe stinks. Who knows.
+/** Packages a bias, activation (leakyReLU), and dense layer into a single
+ * "layer", to make net constructing simpler
+ */
+
 export function logicalTransform(outputSize: number): TransformationFactory {
   return pipeTransform(
     biasTransform(),

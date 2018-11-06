@@ -1,6 +1,8 @@
 import { TransformationFactory } from '.'
 import { mapRow } from '../batchMath'
 
+/** A sigmoid activation function */
+
 export function sigmoid(n: number) {
   return 2 / (1 + Math.exp(-n)) - 1
 }

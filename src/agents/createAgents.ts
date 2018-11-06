@@ -53,6 +53,11 @@ export const cardGuruSummary = joinSummaries(
   cardCountingSummary,
 )
 
+/** Creates an agent of a particular type 
+ * (contextless, rule-tracking, or contextual)
+ * by passing the corresponding game summary 
+ * (contextlessSummary, ruleTrackingSummary, cardGuruSummary)
+ */
 export function createAgent(
   agentSummary: GameSummary<number>,
   learningMethod: LearningMethod,

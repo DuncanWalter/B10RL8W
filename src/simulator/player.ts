@@ -1,5 +1,10 @@
 import { Card, State } from '.'
 
+/** A Player consist of a particular (possibly partially empty) hand, the number
+ * of points that agent has taken, and a policy (map from state and actions to a
+ * particular action and quality of that action)
+ */
+
 export type ActionSummary<F = any> = {
   action: Card
   quality: number

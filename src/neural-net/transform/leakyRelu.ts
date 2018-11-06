@@ -1,6 +1,10 @@
 import { TransformationFactory } from '.'
 import { mapRow } from '../batchMath'
 
+/** Leaky ReLU activation function which takes the slope of the negative side
+ * (positive side is just the identity)
+ */
+
 export function leakyReluTransform(
   slope: number = 0.05,
 ): TransformationFactory {
